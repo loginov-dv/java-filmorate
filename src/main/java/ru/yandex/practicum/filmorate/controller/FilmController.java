@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
@@ -28,6 +29,55 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
+        validate(film);
+
+        film.setId(getNextId());
+        films.put(film.getId(), film);
+        logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
+
+        return film;
+    }
+
+    @PutMapping
+    public Film update(@RequestBody Film newFilm) {
+        if (newFilm.getId() == null) {
+            logger.warn("Не указан id");
+            throw new ValidationException("Не указан id");
+        }
+
+        if (films.containsKey(newFilm.getId())) {
+            validate(newFilm);
+
+            Film oldFilm = films.get(newFilm.getId());
+
+            oldFilm.setName(newFilm.getName());
+            oldFilm.setDescription(newFilm.getDescription());
+            oldFilm.setReleaseDate(newFilm.getReleaseDate());
+            oldFilm.setDuration(newFilm.getDuration());
+
+            logger.info("Изменён фильм: id = {}, name = {}", oldFilm.getId(), oldFilm.getName());
+
+            return oldFilm;
+        }
+
+        logger.warn("Фильм с id = {} не найден", newFilm.getId());
+        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+    }
+
+    private int getNextId() {
+        int currentMaxId = films.keySet()
+                .stream()
+                .mapToInt(id -> id)
+                .max()
+                .orElse(0);
+        return ++currentMaxId;
+    }
+
+    private boolean isNullOrEmpty(String string) {
+        return string == null || string.isBlank();
+    }
+
+    private void validate(Film film) {
         if (isNullOrEmpty(film.getName())) {
             logger.warn("Название не может быть пустым");
             throw new ValidationException("Название не может быть пустым");
@@ -44,40 +94,5 @@ public class FilmController {
             logger.warn("Продолжительность фильма должна быть положительным числом");
             throw new ValidationException("Продолжительность фильма должна быть положительным числом");
         }
-
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
-
-        return film;
-    }
-
-    @PutMapping
-    public Film update(@RequestBody Film newFilm) {
-        if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
-
-            oldFilm.setName(newFilm.getName());
-            oldFilm.setDescription(newFilm.getDescription());
-            oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            oldFilm.setDuration(newFilm.getDuration());
-
-            return oldFilm;
-        }
-
-        throw new RuntimeException("Фильм с id = " + newFilm.getId() + " не найден");
-    }
-
-    private int getNextId() {
-        int currentMaxId = films.keySet()
-                .stream()
-                .mapToInt(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
-    }
-
-    private boolean isNullOrEmpty(String string) {
-        return string == null || string.isBlank();
     }
 }
