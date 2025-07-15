@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -73,12 +74,8 @@ public class FilmController {
         return ++currentMaxId;
     }
 
-    private boolean isNullOrEmpty(String string) {
-        return string == null || string.isBlank();
-    }
-
     private void validate(Film film) {
-        if (isNullOrEmpty(film.getName())) {
+        if (StringUtils.isNullOrEmpty(film.getName())) {
             logger.warn("Название не может быть пустым");
             throw new ValidationException("Название не может быть пустым");
         }

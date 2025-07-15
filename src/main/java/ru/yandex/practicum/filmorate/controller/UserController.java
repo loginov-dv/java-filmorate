@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -14,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     private final Map<Integer, User> users = new HashMap<>();
 
@@ -28,7 +29,7 @@ public class UserController {
         validate(user);
 
         user.setId(getNextId());
-        if (isNullOrEmpty(user.getName())) {
+        if (StringUtils.isNullOrEmpty(user.getName())) {
             user.setName(user.getLogin());
         }
         users.put(user.getId(), user);
@@ -80,12 +81,8 @@ public class UserController {
         return ++currentMaxId;
     }
 
-    private boolean isNullOrEmpty(String string) {
-        return string == null || string.isBlank();
-    }
-
     private void validate(User user) {
-        if (isNullOrEmpty(user.getEmail())) {
+        if (StringUtils.isNullOrEmpty(user.getEmail())) {
             logger.warn("Электронная почта не может быть пустой");
             throw new ValidationException("Электронная почта не может быть пустой");
         }
@@ -93,7 +90,7 @@ public class UserController {
             logger.warn("Электронная почта должна содержать символ @");
             throw new ValidationException("Электронная почта должна содержать символ @");
         }
-        if (isNullOrEmpty(user.getLogin())) {
+        if (StringUtils.isNullOrEmpty(user.getLogin())) {
             logger.warn("Логин не может быть пустым");
             throw new ValidationException("Логин не может быть пустым");
         }
