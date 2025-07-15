@@ -1,5 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
@@ -12,6 +14,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
+
     private final Map<Integer, User> users = new HashMap<>();
 
     @GetMapping
@@ -21,45 +25,50 @@ public class UserController {
 
     @PostMapping
     public User create(@RequestBody User user) {
-        if (isNullOrEmpty(user.getEmail())) {
-            throw new ValidationException("Электронная почта не может быть пустой");
-        }
-        if (!user.getEmail().contains("@")) {
-            throw new ValidationException("Электронная почта должна содержать символ @");
-        }
-        if (isNullOrEmpty(user.getLogin())) {
-            throw new ValidationException("Логин не может быть пустым");
-        }
-        if (user.getLogin().contains(" ")) {
-            throw new ValidationException("Логин не может содержать пробелы");
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            throw new ValidationException("Дата рождения не может быть в будущем");
-        }
+        validate(user);
 
         user.setId(getNextId());
         if (isNullOrEmpty(user.getName())) {
             user.setName(user.getLogin());
         }
         users.put(user.getId(), user);
+        logger.info("Создан пользователь: id = {}, login = {}", user.getId(), user.getLogin());
 
         return user;
     }
 
     @PutMapping
     public User update(@RequestBody User newUser) {
+        if (newUser.getId() == null) {
+            logger.warn("Не указан id");
+            throw new ValidationException("Не указан id");
+        }
+
         if (users.containsKey(newUser.getId())) {
+            validate(newUser);
+
             User oldUser = users.get(newUser.getId());
 
-            oldUser.setEmail(newUser.getEmail());
+            String newEmail = newUser.getEmail();
+            if (newEmail != null) {
+                if (!newEmail.equals(oldUser.getEmail())
+                        && users.values().stream().anyMatch(item -> item.getEmail().equals(newEmail))) {
+                    logger.warn("Этот email уже используется");
+                    throw new ValidationException("Этот email уже используется");
+                }
+                oldUser.setEmail(newUser.getEmail());
+            }
             oldUser.setLogin(newUser.getLogin());
             oldUser.setName(newUser.getName());
             oldUser.setBirthday(newUser.getBirthday());
 
+            logger.info("Изменён пользователь: id = {}, login = {}", oldUser.getId(), oldUser.getLogin());
+
             return oldUser;
         }
 
-        throw new RuntimeException("Пользователь с id = " + newUser.getId() + " не найден");
+        logger.warn("Пользователь с id = {} не найден", newUser.getId());
+        throw new ValidationException("Пользователь с id = " + newUser.getId() + " не найден");
     }
 
     private int getNextId() {
@@ -73,5 +82,28 @@ public class UserController {
 
     private boolean isNullOrEmpty(String string) {
         return string == null || string.isBlank();
+    }
+
+    private void validate(User user) {
+        if (isNullOrEmpty(user.getEmail())) {
+            logger.warn("Электронная почта не может быть пустой");
+            throw new ValidationException("Электронная почта не может быть пустой");
+        }
+        if (!user.getEmail().contains("@")) {
+            logger.warn("Электронная почта должна содержать символ @");
+            throw new ValidationException("Электронная почта должна содержать символ @");
+        }
+        if (isNullOrEmpty(user.getLogin())) {
+            logger.warn("Логин не может быть пустым");
+            throw new ValidationException("Логин не может быть пустым");
+        }
+        if (user.getLogin().contains(" ")) {
+            logger.warn("Логин не может содержать пробелы");
+            throw new ValidationException("Логин не может содержать пробелы");
+        }
+        if (user.getBirthday().isAfter(LocalDate.now())) {
+            logger.warn("Дата рождения не может быть в будущем");
+            throw new ValidationException("Дата рождения не может быть в будущем");
+        }
     }
 }
