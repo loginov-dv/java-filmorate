@@ -65,6 +65,12 @@ public class FilmController {
         throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
     }
 
+    // Вспомогательный эндпоинт для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    @DeleteMapping("/clear")
+    public void clear() {
+        films.clear();
+    }
+
     private int getNextId() {
         int currentMaxId = films.keySet()
                 .stream()
