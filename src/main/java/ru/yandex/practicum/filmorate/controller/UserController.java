@@ -28,6 +28,12 @@ public class UserController {
     public User create(@RequestBody User user) {
         validate(user);
 
+        String email = user.getEmail();
+        if (users.values().stream().anyMatch(item -> item.getEmail().equals(email))) {
+            logger.warn("Этот email уже используется");
+            throw new ValidationException("Этот email уже используется");
+        }
+
         user.setId(getNextId());
         if (StringUtils.isNullOrEmpty(user.getName())) {
             user.setName(user.getLogin());
@@ -51,14 +57,12 @@ public class UserController {
             User oldUser = users.get(newUser.getId());
 
             String newEmail = newUser.getEmail();
-            if (newEmail != null) {
-                if (!newEmail.equals(oldUser.getEmail())
-                        && users.values().stream().anyMatch(item -> item.getEmail().equals(newEmail))) {
-                    logger.warn("Этот email уже используется");
-                    throw new ValidationException("Этот email уже используется");
-                }
-                oldUser.setEmail(newUser.getEmail());
+            if (!newEmail.equals(oldUser.getEmail())
+                    && users.values().stream().anyMatch(item -> item.getEmail().equals(newEmail))) {
+                logger.warn("Этот email уже используется");
+                throw new ValidationException("Этот email уже используется");
             }
+            oldUser.setEmail(newUser.getEmail());
             oldUser.setLogin(newUser.getLogin());
             oldUser.setName(newUser.getName());
             oldUser.setBirthday(newUser.getBirthday());
