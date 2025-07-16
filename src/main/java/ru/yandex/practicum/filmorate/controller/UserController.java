@@ -72,6 +72,12 @@ public class UserController {
         throw new ValidationException("Пользователь с id = " + newUser.getId() + " не найден");
     }
 
+    // Вспомогательный эндпоинт для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    @DeleteMapping("/clear")
+    public void clear() {
+        users.clear();
+    }
+
     private int getNextId() {
         int currentMaxId = users.keySet()
                 .stream()
