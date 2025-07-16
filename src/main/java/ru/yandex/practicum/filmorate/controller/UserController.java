@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ public class UserController {
     }
 
     @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(@Valid @RequestBody User user) {
         validate(user);
 
         String email = user.getEmail();
@@ -45,7 +46,7 @@ public class UserController {
     }
 
     @PutMapping
-    public User update(@RequestBody User newUser) {
+    public User update(@Valid @RequestBody User newUser) {
         if (newUser.getId() == null) {
             logger.warn("Не указан id");
             throw new ValidationException("Не указан id");
@@ -92,25 +93,9 @@ public class UserController {
     }
 
     private void validate(User user) {
-        if (StringUtils.isNullOrEmpty(user.getEmail())) {
-            logger.warn("Электронная почта не может быть пустой");
-            throw new ValidationException("Электронная почта не может быть пустой");
-        }
-        if (!user.getEmail().contains("@")) {
-            logger.warn("Электронная почта должна содержать символ @");
-            throw new ValidationException("Электронная почта должна содержать символ @");
-        }
-        if (StringUtils.isNullOrEmpty(user.getLogin())) {
-            logger.warn("Логин не может быть пустым");
-            throw new ValidationException("Логин не может быть пустым");
-        }
         if (user.getLogin().contains(" ")) {
             logger.warn("Логин не может содержать пробелы");
             throw new ValidationException("Логин не может содержать пробелы");
-        }
-        if (user.getBirthday().isAfter(LocalDate.now())) {
-            logger.warn("Дата рождения не может быть в будущем");
-            throw new ValidationException("Дата рождения не может быть в будущем");
         }
     }
 }
