@@ -241,7 +241,7 @@ class UserControllerTest {
         mockMvc.perform(put(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(user)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isNotFound());
     }
 
     // Проверяет попытку изменения email на другой, который уже используется
