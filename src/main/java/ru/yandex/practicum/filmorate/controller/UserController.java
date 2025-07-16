@@ -8,23 +8,26 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.util.StringUtils;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+// Контроллер для обслуживания пользователей
 @RestController
 @RequestMapping("/users")
 public class UserController {
+    // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
-
+    // Мапа для хранения пользователей
     private final Map<Integer, User> users = new HashMap<>();
 
+    // Эндпоинт GET /users
     @GetMapping
     public Collection<User> getAll() {
         return users.values();
     }
 
+    // Эндпоинт POST /users
     @PostMapping
     public User create(@Valid @RequestBody User user) {
         validate(user);
@@ -45,6 +48,7 @@ public class UserController {
         return user;
     }
 
+    // Эндпоинт PUT /users
     @PutMapping
     public User update(@Valid @RequestBody User newUser) {
         if (newUser.getId() == null) {
@@ -77,12 +81,13 @@ public class UserController {
         throw new ValidationException("Пользователь с id = " + newUser.getId() + " не найден");
     }
 
-    // Вспомогательный эндпоинт для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    // Вспомогательный эндпоинт DELETE /users для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {
         users.clear();
     }
 
+    // Вспомогательный метод для генерации идентификаторов
     private int getNextId() {
         int currentMaxId = users.keySet()
                 .stream()
@@ -92,6 +97,7 @@ public class UserController {
         return ++currentMaxId;
     }
 
+    // Вспомогательный метод для валидации
     private void validate(User user) {
         if (user.getLogin().contains(" ")) {
             logger.warn("Логин не может содержать пробелы");

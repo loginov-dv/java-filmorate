@@ -2,7 +2,6 @@ package ru.yandex.practicum.filmorate.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,24 +14,24 @@ import ru.yandex.practicum.filmorate.adapter.LocalDateAdapter;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// Тестовый класс для контроллера фильмов
 @SpringBootTest
 @AutoConfigureMockMvc
 class FilmControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
-
+    // Gson
     private final Gson gson = new GsonBuilder().registerTypeAdapter(LocalDate.class, new LocalDateAdapter()).create();
-
+    // Путь
     private static final String FILMS_URL = "/films";
 
+    // Очистка мапы контроллера через метод DELETE
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(FILMS_URL + "/clear"));
@@ -49,8 +48,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(validFilm)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(validFilm)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(FILMS_URL))
@@ -68,8 +67,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilmWithNullName)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilmWithNullName)))
                 .andExpect(status().isBadRequest());
 
         final Film invalidFilmWithEmptyName = Film.builder()
@@ -80,8 +79,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilmWithEmptyName)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilmWithEmptyName)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(FILMS_URL))
@@ -92,16 +91,7 @@ class FilmControllerTest {
     // Проверяет попытку добавления нового фильма с некорректным описанием
     @Test
     void shouldNotAddFilmWithInvalidDescription() throws Exception {
-        final String invalidDescription = """
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum aliquet eros eu hendrerit pretium. 
-                Nam eu tortor mollis tellus pretium consequat eget at eros. Vestibulum imperdiet lorem massa, 
-                a iaculis sapien ultrices in. Donec auctor, nulla pulvinar mattis cursus, lorem urna euismod massa, 
-                in blandit velit odio vitae massa. Aenean in massa eget arcu rhoncus varius in sed sem. 
-                Vestibulum et maximus sem. Morbi ultrices vitae elit sit amet porttitor. 
-                Pellentesque dapibus bibendum lectus eu lobortis. Aenean euismod fermentum nibh eget malesuada. 
-                Nunc eu vestibulum ipsum. Nulla vitae cursus mauris. 
-                Etiam maximus gravida ligula, vel posuere ex congue at.
-                """;
+        final String invalidDescription = "a".repeat(201);
 
         final Film invalidFilm = Film.builder()
                 .name("name")
@@ -111,8 +101,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilm)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilm)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(FILMS_URL))
@@ -122,7 +112,7 @@ class FilmControllerTest {
 
     // Проверяет попытку добавления нового фильма с некорректной датой релиза
     @Test
-    void shouldNotAddFilmWithIncorrectReleaseDate() throws Exception {
+    void shouldNotAddFilmWithInvalidReleaseDate() throws Exception {
         final Film invalidFilm = Film.builder()
                 .name("name")
                 .description("description")
@@ -131,8 +121,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilm)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilm)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(FILMS_URL))
@@ -151,8 +141,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilmWithZeroDuration)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilmWithZeroDuration)))
                 .andExpect(status().isBadRequest());
 
         final Film invalidFilmWithNegativeDuration = Film.builder()
@@ -163,8 +153,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidFilmWithNegativeDuration)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidFilmWithNegativeDuration)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(FILMS_URL))
@@ -176,8 +166,8 @@ class FilmControllerTest {
     @Test
     void shouldHandleEmptyRequest() throws Exception {
         mockMvc.perform(post(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(""))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
                 .andExpect(status().isBadRequest());
     }
 
@@ -205,8 +195,8 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(put(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(film1)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(film1)))
                 .andExpect(status().isOk());
     }
 
@@ -224,11 +214,12 @@ class FilmControllerTest {
                 .build();
 
         mockMvc.perform(put(FILMS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(film1)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(film1)))
                 .andExpect(status().isNotFound());
     }
 
+    // Заполняет мапу контроллера тестовыми валидными данными
     void fillWithValidData() throws Exception {
         Film film1 = Film.builder()
                 .name("name 1")
@@ -252,8 +243,8 @@ class FilmControllerTest {
 
         for (Film film : films) {
             mockMvc.perform(post(FILMS_URL)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(gson.toJson(film)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(film)))
                     .andExpect(status().isOk());
         }
     }

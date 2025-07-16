@@ -22,16 +22,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+// Тестовый класс для контроллера пользователей
 @SpringBootTest
 @AutoConfigureMockMvc
 class UserControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
+    // Gson
     private final Gson gson = new GsonBuilder().registerTypeAdapter(LocalDate.class, new LocalDateAdapter()).create();
-
+    // Путь
     private static final String USERS_URL = "/users";
 
+    // Очистка мапы контроллера через метод DELETE
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(USERS_URL + "/clear"));
@@ -48,8 +50,8 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(validUser)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(validUser)))
                 .andExpect(status().isOk());
 
         mockMvc.perform(get(USERS_URL))
@@ -81,18 +83,18 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidUserWithNullLogin)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidUserWithNullLogin)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(ivalidUserWithEmptyLogin)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(ivalidUserWithEmptyLogin)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(invalidUserWithWhitespace)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(invalidUserWithWhitespace)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(USERS_URL))
@@ -154,8 +156,8 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(guestFromTheFuture)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(guestFromTheFuture)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(USERS_URL))
@@ -176,8 +178,8 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(user)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(user)))
                 .andExpect(status().isBadRequest());
 
         mockMvc.perform(get(USERS_URL))
@@ -189,8 +191,8 @@ class UserControllerTest {
     @Test
     void shouldHandleEmptyRequest() throws Exception {
         mockMvc.perform(post(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(""))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(""))
                 .andExpect(status().isBadRequest());
     }
 
@@ -218,8 +220,8 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(put(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(user)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(user)))
                 .andExpect(status().isOk());
     }
 
@@ -237,8 +239,8 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(put(USERS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(gson.toJson(user)))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(user)))
                 .andExpect(status().isBadRequest());
     }
 
@@ -261,6 +263,7 @@ class UserControllerTest {
                 .andExpect(status().isOk());
     }
 
+    // Заполняет мапу контроллера тестовыми валидными данными
     void fillWithValidData() throws Exception {
         final User user1 = User.builder()
                 .name("user1")
@@ -285,8 +288,8 @@ class UserControllerTest {
 
         for (User user : users) {
             mockMvc.perform(post(USERS_URL)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(gson.toJson(user)))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(user)))
                     .andExpect(status().isOk());
         }
     }

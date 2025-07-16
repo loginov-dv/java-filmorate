@@ -8,27 +8,30 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
-import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+// Контроллер для обслуживания фильмов
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    private static final int MAX_DESC_LENGTH = 200;
+    // Самая ранняя возможная дата релиза фильма
     private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
+    // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
-
+    // Мапа для хранения фильмов
     private final Map<Integer, Film> films = new HashMap<>();
 
+    // Эндпоинт GET /films
     @GetMapping
     public Collection<Film> getAll() {
         return films.values();
     }
 
+    // Эндпоинт POST /films
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
         validate(film);
@@ -40,6 +43,7 @@ public class FilmController {
         return film;
     }
 
+    // Эндпоинт PUT /films
     @PutMapping
     public Film update(@Valid @RequestBody Film newFilm) {
         if (newFilm.getId() == null) {
@@ -66,12 +70,13 @@ public class FilmController {
         throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
     }
 
-    // Вспомогательный эндпоинт для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    // Вспомогательный эндпоинт DELETE /films для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {
         films.clear();
     }
 
+    // Вспомогательный метод для генерации идентификаторов
     private int getNextId() {
         int currentMaxId = films.keySet()
                 .stream()
@@ -81,6 +86,7 @@ public class FilmController {
         return ++currentMaxId;
     }
 
+    // Вспомогательный метод для валидации
     private void validate(Film film) {
         if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
             logger.warn("Дата релиза — не раньше 28 декабря 1895 года");

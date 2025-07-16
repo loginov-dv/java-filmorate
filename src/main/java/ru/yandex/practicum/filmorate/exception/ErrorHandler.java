@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+// RestControllerAdvice для обработки исключений и преобразования их в HTTP-ответы
 @RestControllerAdvice
 public class ErrorHandler {
     @ExceptionHandler(ValidationException.class)
