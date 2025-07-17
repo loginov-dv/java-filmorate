@@ -206,9 +206,9 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.length()").value(3));
     }
 
-    // Проверяет обновление существующего пользователя
+    // Проверяет обновление существующего пользователя (всех полей)
     @Test
-    void shouldUpdateUser() throws Exception {
+    void shouldUpdateUserAllFields() throws Exception {
         fillWithValidData();
 
         final User user = User.builder()
@@ -216,6 +216,25 @@ class UserControllerTest {
                 .name("katya")
                 .login("katya")
                 .email("katya@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+
+        mockMvc.perform(put(USERS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(user)))
+                .andExpect(status().isOk());
+    }
+
+    // Проверяет обновление существующего пользователя (всех полей, кроме email)
+    @Test
+    void shouldUpdateUserAllFieldsExceptEmail() throws Exception {
+        fillWithValidData();
+
+        final User user = User.builder()
+                .id(1)
+                .name("katya")
+                .login("katya")
+                .email("user1@test.com")
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
