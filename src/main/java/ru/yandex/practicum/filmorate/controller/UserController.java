@@ -31,8 +31,6 @@ public class UserController {
     // Эндпоинт POST /users
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        validate(user);
-
         String email = user.getEmail();
         if (users.values().stream().anyMatch(item -> item.getEmail().equals(email))) {
             logger.warn("Этот email уже используется");
@@ -58,8 +56,6 @@ public class UserController {
         }
 
         if (users.containsKey(newUser.getId())) {
-            validate(newUser);
-
             User oldUser = users.get(newUser.getId());
 
             String newEmail = newUser.getEmail();
@@ -96,13 +92,5 @@ public class UserController {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
-    }
-
-    // Вспомогательный метод для валидации
-    private void validate(User user) {
-        if (user.getLogin().contains(" ")) {
-            logger.warn("Логин не может содержать пробелы");
-            throw new ValidationException("Логин не может содержать пробелы");
-        }
     }
 }
