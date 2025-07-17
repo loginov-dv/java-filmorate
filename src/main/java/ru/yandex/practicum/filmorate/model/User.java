@@ -16,17 +16,15 @@ public class User {
     // Идентификатор
     private Integer id;
     // Электронная почта
-    @NotNull
-    @NotBlank
-    @Email
+    @NotBlank(message = "Электронная почта не может быть пустой")
+    @Email(message = "Электронная почта не соответствует формату")
     private String email;
     // Логин
-    @NotNull
-    @NotBlank
+    @NotBlank(message = "Логин не может быть пустым")
     private String login;
     // Имя
     private String name;
     // Дата рождения
-    @Past
+    @Past(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 }
