@@ -18,8 +18,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    // Самая ранняя возможная дата релиза фильма
-    private static final LocalDate MIN_RELEASE_DATE = LocalDate.of(1895, 12, 28);
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
     // Мапа для хранения фильмов
@@ -34,8 +32,6 @@ public class FilmController {
     // Эндпоинт POST /films
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {
-        validate(film);
-
         film.setId(getNextId());
         films.put(film.getId(), film);
         logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
@@ -52,8 +48,6 @@ public class FilmController {
         }
 
         if (films.containsKey(newFilm.getId())) {
-            validate(newFilm);
-
             Film oldFilm = films.get(newFilm.getId());
 
             oldFilm.setName(newFilm.getName());
@@ -84,13 +78,5 @@ public class FilmController {
                 .max()
                 .orElse(0);
         return ++currentMaxId;
-    }
-
-    // Вспомогательный метод для валидации
-    private void validate(Film film) {
-        if (film.getReleaseDate() != null && film.getReleaseDate().isBefore(MIN_RELEASE_DATE)) {
-            logger.warn("Дата релиза — не раньше 28 декабря 1895 года");
-            throw new ValidationException("Дата релиза — не раньше 28 декабря 1895 года");
-        }
     }
 }
