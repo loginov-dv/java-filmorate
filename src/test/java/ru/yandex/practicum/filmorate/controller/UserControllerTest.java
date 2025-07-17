@@ -75,13 +75,6 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        final User invalidUserWithWhitespace = User.builder()
-                .name("masha")
-                .login("ma sha")
-                .email("masha@test.com")
-                .birthday(LocalDate.of(2000, 1, 1))
-                .build();
-
         mockMvc.perform(post(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(invalidUserWithNullLogin)))
@@ -92,10 +85,52 @@ class UserControllerTest {
                         .content(gson.toJson(ivalidUserWithEmptyLogin)))
                 .andExpect(status().isBadRequest());
 
-        mockMvc.perform(post(USERS_URL)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(gson.toJson(invalidUserWithWhitespace)))
-                .andExpect(status().isBadRequest());
+        mockMvc.perform(get(USERS_URL))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    // Проверяет попытку добавления нового пользователя с логином, содержащим пробелы
+    @Test
+    void shouldNotAddUserWithWhitespaceInLogin() throws Exception {
+        final User invalidUser1 = User.builder()
+                .name("masha")
+                .login("ma sha")
+                .email("masha@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        final User invalidUser2 = User.builder()
+                .name("masha")
+                .login(" masha")
+                .email("masha@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        final User invalidUser3 = User.builder()
+                .name("masha")
+                .login("masha ")
+                .email("masha@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        final User invalidUser4 = User.builder()
+                .name("masha")
+                .login("mas     ha")
+                .email("masha@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        final User invalidUser5 = User.builder()
+                .name("masha")
+                .login(" mas ha ")
+                .email("masha@test.com")
+                .birthday(LocalDate.of(2000, 1, 1))
+                .build();
+        List<User> invalidUsers = List.of(invalidUser1, invalidUser2, invalidUser3, invalidUser4, invalidUser5);
+
+        for (User invalidUser : invalidUsers) {
+            mockMvc.perform(post(USERS_URL)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(gson.toJson(invalidUser)))
+                    .andExpect(status().isBadRequest());
+        }
 
         mockMvc.perform(get(USERS_URL))
                 .andExpect(status().isOk())
