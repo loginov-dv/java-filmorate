@@ -11,9 +11,10 @@ import java.lang.annotation.Target;
 // Кастомная аннотация для проверки даты
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = ReleaseDateValidator.class)
+@Constraint(validatedBy = ReleaseDateValidator.class) // класс-валидатор
 public @interface ReleaseDate {
     String message() default "Дата релиза — не раньше 28 декабря 1895 года";
+    // обязательные элементы
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }
