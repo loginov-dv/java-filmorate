@@ -16,15 +16,16 @@ public class Film {
     // Идентификатор
     private Integer id;
     // Название
-    @NotNull
-    @NotBlank
+    @NotBlank(message = "Название не может быть пустым")
     private String name;
     // Описание
-    @Size(max = 200)
+    @Size(max = 200, message = "Максимальная длина описания — 200 символов")
+    @NotBlank(message = "Описание должно быть заполнено")
     private String description;
     // Дата релиза
+    @ReleaseDate
     private LocalDate releaseDate;
     // Продолжительность
-    @Positive
+    @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
 }
