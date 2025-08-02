@@ -317,6 +317,24 @@ class UserControllerTest {
                 .andExpect(status().isOk());
     }
 
+    // Проверяет получение пользователя по id
+    @Test
+    void shouldReturnUserById() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(get(USERS_URL + "/1"))
+                .andExpect(status().isOk());
+    }
+
+    // Проверяет получение несуществующего пользователя
+    @Test
+    void shouldReturnNotFoundIfUserWithSpecifiedIdDoesntExist() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(get(USERS_URL + "/4"))
+                .andExpect(status().isNotFound());
+    }
+
     // Заполняет мапу контроллера тестовыми валидными данными
     void fillWithValidData() throws Exception {
         final User user1 = User.builder()
