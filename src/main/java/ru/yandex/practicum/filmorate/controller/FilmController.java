@@ -27,6 +27,12 @@ public class FilmController {
         return filmService.getAll();
     }
 
+    // Эндпоинт GET /films/{id}
+    @GetMapping("/{id}")
+    public Film getById(@PathVariable int id) {
+        return filmService.getById(id);
+    }
+
     // Эндпоинт POST /films
     @PostMapping
     public Film create(@Valid @RequestBody Film film) {

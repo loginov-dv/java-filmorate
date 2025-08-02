@@ -35,8 +35,15 @@ public class FilmService {
     }
 
     // Вернуть фильм по id
-    public Optional<Film> getById(int id) {
-        return filmStorage.getById(id);
+    public Film getById(int id) {
+        Optional<Film> maybeFilm = filmStorage.getById(id);
+
+        if (maybeFilm.isEmpty()) {
+            logger.warn("Фильм с id = {} не найден", id);
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
+        }
+
+        return maybeFilm.get();
     }
 
     // Создать новый фильм
