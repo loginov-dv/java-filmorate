@@ -7,6 +7,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
+import java.util.Optional;
 
 // Контроллер для обслуживания пользователей
 @RestController
@@ -24,6 +25,11 @@ public class UserController {
     @GetMapping
     public Collection<User> getAll() {
         return userService.getAll();
+    }
+
+    @GetMapping("/{id}")
+    public Optional<User> getById(@PathVariable int id) {
+        return userService.getById(id);
     }
 
     // Эндпоинт POST /users
