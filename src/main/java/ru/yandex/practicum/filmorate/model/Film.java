@@ -5,12 +5,14 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 
 // Модель данных для описания фильма
 @Data
 @Builder
+@EqualsAndHashCode(exclude = {"id", "description"})
 public class Film {
     // Идентификатор
     private Integer id;
