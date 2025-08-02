@@ -67,9 +67,9 @@ public class FilmService {
             Film oldFilm = maybeFilm.get();
 
             filmStorage.update(newFilm);
-            logger.info("Изменён фильм: id = {}, name = {}", oldFilm.getId(), oldFilm.getName());
+            logger.info("Изменён фильм: id = {}, name = {}", newFilm.getId(), newFilm.getName());
 
-            return oldFilm;
+            return newFilm;
         }
 
         logger.warn("Фильм с id = {} не найден", newFilm.getId());
@@ -114,7 +114,7 @@ public class FilmService {
         }
 
         return filmStorage.getAll().stream()
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()))
+                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed())
                 .limit(count)
                 .collect(Collectors.toList());
     }
