@@ -56,4 +56,10 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
                 .anyMatch(item -> item.getUserId().equals(firstUserId)
                         && item.getFriendId().equals(secondUserId));
     }
+
+    // Удаляет все дружеские связи
+    @Override
+    public void clear() {
+        friendshipSet.clear();
+    }
 }
