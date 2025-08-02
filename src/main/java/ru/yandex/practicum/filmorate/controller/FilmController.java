@@ -1,8 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,8 +15,6 @@ import java.util.Collection;
 public class FilmController {
     // Сервис работы с фильмами
     private final FilmService filmService;
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
 
     @Autowired
     public FilmController(FilmService filmService) {
@@ -41,6 +37,25 @@ public class FilmController {
     @PutMapping
     public Film update(@Valid @RequestBody Film newFilm) {
         return filmService.update(newFilm);
+    }
+
+    // Эндпоинт PUT /films/{id}/like/{userId}
+    @PutMapping("/{id}/like/{userId}")
+    public void putLike(@PathVariable int id,
+                        @PathVariable int userId) {
+        filmService.putLike(id, userId);
+    }
+
+    // Эндпоинт DELETE /films/{id}/like/{userId}
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable int id,
+                           @PathVariable int userId) {
+        filmService.removeLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getPopular(count);
     }
 
     // Вспомогательный эндпоинт DELETE /films для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
