@@ -44,6 +44,20 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.clear();
     }
 
+    // Поставить лайк фильму
+    @Override
+    public void putLike(int filmId, int userId) {
+        Film film = films.get(filmId);
+        film.addLike(userId);
+    }
+
+    // Убрать лайк
+    @Override
+    public void removeLike(int filmId, int userId) {
+        Film film = films.get(filmId);
+        film.removeLike(userId);
+    }
+
     // Вспомогательный метод для генерации id
     @Override
     public int getNextId() {

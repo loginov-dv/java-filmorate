@@ -23,6 +23,12 @@ public interface FilmStorage {
     // Удалить все фильмы
     void clear();
 
+    // Поставить лайк
+    void putLike(int filmId, int userId);
+
+    // Убрать лайк
+    void removeLike(int filmId, int userId);
+
     // Получить новый id фильма
     int getNextId();
 }
