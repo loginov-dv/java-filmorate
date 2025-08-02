@@ -37,10 +37,18 @@ public class Film {
     private Set<Integer> likes = new HashSet<>();
 
     public void addLike(int id) {
+        if (likes == null) {
+            likes = new HashSet<>();
+        }
+
         likes.add(id);
     }
 
     public void removeLike(int id) {
+        if (likes == null) {
+            return;
+        }
+
         likes.remove(id);
     }
 }
