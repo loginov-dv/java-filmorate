@@ -33,7 +33,7 @@ class UserControllerTest {
     // Путь
     private static final String USERS_URL = "/users";
 
-    // Очистка мапы контроллера через метод DELETE
+    // Очистка хранилища через метод DELETE
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(USERS_URL + "/clear"));
@@ -335,7 +335,7 @@ class UserControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // Заполняет мапу контроллера тестовыми валидными данными
+    // Заполняет хранилище пользователей тестовыми валидными данными
     void fillWithValidData() throws Exception {
         final User user1 = User.builder()
                 .name("user1")
@@ -365,5 +365,4 @@ class UserControllerTest {
                     .andExpect(status().isOk());
         }
     }
-
 }
