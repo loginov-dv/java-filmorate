@@ -37,8 +37,7 @@ public class UserService {
 
     // Создать нового пользователя
     public User create(User user) {
-        String email = user.getEmail();
-        if (userStorage.getAll().stream().anyMatch(item -> item.getEmail().equals(email))) {
+        if (userStorage.getAll().contains(user)) {
             logger.warn("Этот email уже используется");
             throw new ValidationException("Этот email уже используется");
         }
@@ -65,8 +64,7 @@ public class UserService {
             User oldUser = maybeUser.get();
 
             String newEmail = newUser.getEmail();
-            if (!newEmail.equals(oldUser.getEmail())
-                    && userStorage.getAll().stream().anyMatch(item -> item.getEmail().equals(newEmail))) {
+            if (!newEmail.equals(oldUser.getEmail()) && userStorage.getAll().contains(newUser)) {
                 logger.warn("Этот email уже используется");
                 throw new ValidationException("Этот email уже используется");
             }
