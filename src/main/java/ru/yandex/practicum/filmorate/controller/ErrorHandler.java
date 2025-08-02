@@ -1,9 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ru.yandex.practicum.filmorate.exception.ErrorMessage;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -11,15 +10,16 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 
 // RestControllerAdvice для обработки исключений и преобразования их в HTTP-ответы
 @RestControllerAdvice
-@ResponseBody
 public class ErrorHandler {
     @ExceptionHandler(ValidationException.class)
-    public ResponseEntity<ErrorMessage> handleValidationException(ValidationException ex) {
-        return ResponseEntity.badRequest().body(new ErrorMessage(ex.getMessage()));
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleValidationException(final ValidationException ex) {
+        return new ErrorMessage(ex.getMessage());
     }
 
     @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<ErrorMessage> handleNotFoundException(NotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorMessage(ex.getMessage()));
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorMessage handleNotFoundException(final NotFoundException ex) {
+        return new ErrorMessage(ex.getMessage());
     }
 }
