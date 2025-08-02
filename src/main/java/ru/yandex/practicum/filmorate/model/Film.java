@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -33,8 +34,13 @@ public class Film {
     private int duration;
     // Лайки пользователей
     @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
     @Builder.Default
     private Set<Integer> likes = new HashSet<>();
+
+    public Set<Integer> getLikes() {
+        return likes == null ? Collections.emptySet() : likes;
+    }
 
     public void addLike(int id) {
         if (likes == null) {
