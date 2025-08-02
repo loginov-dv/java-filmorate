@@ -12,4 +12,6 @@ public interface FriendshipStorage {
     Set<Integer> getFriends(int userId);
     // Получить всех общий друзей двух пользователей
     Set<Integer> getCommonFriends(int firstUserId, int secondUserId);
+    // Проверяет, являются ли друзьями два пользователя с указанными id
+    boolean areFriends(int firstUserId, int secondUserId);
 }

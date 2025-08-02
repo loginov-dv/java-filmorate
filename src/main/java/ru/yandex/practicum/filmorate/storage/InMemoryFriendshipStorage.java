@@ -24,9 +24,9 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
     // Удалить дружескую связь между пользователями
     @Override
     public void removeFriendship(int userId, int friendId) {
-        friendshipSet.removeIf(friendship ->
-                (friendship.getUserId().equals(userId) && friendship.getFriendId().equals(friendId))
-                        || (friendship.getUserId().equals(friendId) && friendship.getFriendId().equals(userId)));
+        friendshipSet.removeIf(item ->
+                (item.getUserId().equals(userId) && item.getFriendId().equals(friendId))
+                        || (item.getUserId().equals(friendId) && item.getFriendId().equals(userId)));
     }
 
     // Получить всех друзей пользователя с указанными id
@@ -47,5 +47,13 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
         return firstUserFriends.stream()
                 .filter(secondUserFriends::contains)
                 .collect(Collectors.toSet());
+    }
+
+    // Проверяет, являются ли друзьями два пользователя с указанными id
+    @Override
+    public boolean areFriends(int firstUserId, int secondUserId) {
+        return friendshipSet.stream()
+                .anyMatch(item -> item.getUserId().equals(firstUserId)
+                        && item.getFriendId().equals(secondUserId));
     }
 }
