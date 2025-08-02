@@ -46,6 +46,7 @@ public class FriendshipService {
             logger.warn("Пользователи уже являются друзьями");
             throw new ValidationException("Пользователи уже являются друзьями");
         }
+        logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
         friendshipStorage.addFriendship(userId, friendId);
     }
 
@@ -59,10 +60,11 @@ public class FriendshipService {
             logger.warn("Пользователь с id = {} не найден", friendId);
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         }
-        if (!areFriends(userId, friendId)) {
+        /*if (!areFriends(userId, friendId)) {
             logger.warn("Пользователи не являются друзьями");
             throw new ValidationException("Пользователи не являются друзьями");
-        }
+        }*/
+        logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
         friendshipStorage.removeFriendship(userId, friendId);
     }
 
@@ -75,6 +77,7 @@ public class FriendshipService {
 
         Set<Integer> friendsId = friendshipStorage.getFriends(userId);
 
+        logger.info("Друзья пользователя с id = {}: {}", userId, friendsId);
         return friendsId.stream()
                 .map(userService::getById)
                 .collect(Collectors.toSet());
@@ -93,6 +96,7 @@ public class FriendshipService {
 
         Set<Integer> commonFriendsId = friendshipStorage.getCommonFriends(firstUserId, secondUserId);
 
+        logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId, commonFriendsId);
         return commonFriendsId.stream()
                 .map(userService::getById)
                 .collect(Collectors.toSet());
