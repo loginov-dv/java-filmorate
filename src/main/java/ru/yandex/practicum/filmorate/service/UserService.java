@@ -90,4 +90,9 @@ public class UserService {
     public void clear() {
         userStorage.clear();
     }
+
+    // Вспомогательный метод для проверки наличия пользователя с указанным id
+    public boolean isPresent(int id) {
+        return userStorage.getById(id).isPresent();
+    }
 }
