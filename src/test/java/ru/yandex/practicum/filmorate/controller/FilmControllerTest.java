@@ -1,7 +1,5 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -38,14 +36,12 @@ class FilmControllerTest {
     private final Gson gson = new GsonBuilder().registerTypeAdapter(LocalDate.class, new LocalDateAdapter()).create();
     // Путь
     private static final String FILMS_URL = "/films";
-    // Jackson ObjectMapper
-    /*@Autowired
-    private ObjectMapper objectMapper;*/
 
     // Очистка хранилища фильмов через метод DELETE
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(FILMS_URL + "/clear"));
+        mockMvc.perform(delete("/users/clear"));
     }
 
     // Проверяет добавление нового фильма
@@ -304,24 +300,15 @@ class FilmControllerTest {
         MvcResult result = mockMvc.perform(get(FILMS_URL + "/popular"))
                 .andExpect(status().isOk())
                 .andReturn();
-        /*CollectionType collectionType = objectMapper.getTypeFactory().constructCollectionType(List.class, Film.class);
-        List<Film> popularFilms = objectMapper.readValue(json, collectionType);*/
         String json = result.getResponse().getContentAsString();
         TypeToken<List<Film>> typeToken = new TypeToken<>(){};
         List<Film> popularFilms = gson.fromJson(json, typeToken.getType());
 
         assertNotNull(popularFilms);
         assertEquals(3, popularFilms.size());
-        // значение в Optional гарантированно присутствует
-        assertEquals(3, popularFilms.stream()
-                .filter(item -> item.getId().equals(1))
-                .findFirst().orElse(null).getLikes().size());
-        assertEquals(2, popularFilms.stream()
-                .filter(item -> item.getId().equals(2))
-                .findFirst().orElse(null).getLikes().size());
-        assertEquals(1, popularFilms.stream()
-                .filter(item -> item.getId().equals(3))
-                .findFirst().orElse(null).getLikes().size());
+        assertEquals(3, popularFilms.get(0).getLikes().size());
+        assertEquals(2, popularFilms.get(1).getLikes().size());
+        assertEquals(1, popularFilms.get(2).getLikes().size());
     }
 
     // Заполняет хранилище фильмов тестовыми валидными данными
