@@ -54,11 +54,7 @@ public class FilmService {
         if (maybeFilm.isPresent()) {
             Film oldFilm = maybeFilm.get();
 
-            oldFilm.setName(newFilm.getName());
-            oldFilm.setDescription(newFilm.getDescription());
-            oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            oldFilm.setDuration(newFilm.getDuration());
-
+            filmStorage.update(newFilm);
             logger.info("Изменён фильм: id = {}, name = {}", oldFilm.getId(), oldFilm.getName());
 
             return oldFilm;
