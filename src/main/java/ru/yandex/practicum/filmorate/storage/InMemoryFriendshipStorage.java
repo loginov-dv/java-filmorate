@@ -14,6 +14,7 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
     private final Set<Friendship> friendshipSet = new HashSet<>();
 
     // Добавить дружескую связь между пользователями
+    @Override
     public void addFriendship(int userId, int friendId) {
         friendshipSet.add(new Friendship(userId, friendId));
         // Двусторонняя связь
@@ -21,6 +22,7 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
     }
 
     // Удалить дружескую связь между пользователями
+    @Override
     public void removeFriendship(int userId, int friendId) {
         friendshipSet.removeIf(friendship ->
                 (friendship.getUserId().equals(userId) && friendship.getFriendId().equals(friendId))
@@ -28,6 +30,7 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
     }
 
     // Получить всех друзей пользователя с указанными id
+    @Override
     public Set<Integer> getFriends(int userId) {
         return friendshipSet.stream()
                 .filter(item -> item.getUserId().equals(userId))
@@ -36,6 +39,7 @@ public class InMemoryFriendshipStorage implements FriendshipStorage {
     }
 
     // Получить всех общий друзей двух пользователей
+    @Override
     public Set<Integer> getCommonFriends(int firstUserId, int secondUserId) {
         Set<Integer> firstUserFriends = getFriends(firstUserId);
         Set<Integer> secondUserFriends = getFriends(secondUserId);
