@@ -112,6 +112,11 @@ public class FilmService {
                 .collect(Collectors.toList());
     }
 
+    // Убрать лайки у всех фильмов
+    public void clearLikes() {
+        filmStorage.clearLikes();
+    }
+
     // Вспомогательный метод для проверки наличия фильма с указанным id
     public boolean isPresent(int id) {
         return filmStorage.getById(id).isPresent();

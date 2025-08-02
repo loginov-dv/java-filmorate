@@ -58,6 +58,14 @@ public class InMemoryFilmStorage implements FilmStorage {
         film.removeLike(userId);
     }
 
+    // Убрать лайки у всех фильмов
+    @Override
+    public void clearLikes() {
+        for (Film film : films.values()) {
+            film.removeAllLikes();
+        }
+    }
+
     // Вспомогательный метод для генерации id
     @Override
     public int getNextId() {

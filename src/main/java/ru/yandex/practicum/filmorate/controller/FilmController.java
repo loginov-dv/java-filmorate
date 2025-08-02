@@ -58,6 +58,11 @@ public class FilmController {
         return filmService.getPopular(count);
     }
 
+    @DeleteMapping("/likes/clear")
+    public void clearLikes() {
+        filmService.clearLikes();
+    }
+
     // Вспомогательный эндпоинт DELETE /films для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {

@@ -29,6 +29,9 @@ public interface FilmStorage {
     // Убрать лайк
     void removeLike(int filmId, int userId);
 
+    // Убрать лайки у всех фильмов
+    void clearLikes();
+
     // Получить новый id фильма
     int getNextId();
 }

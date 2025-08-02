@@ -51,4 +51,8 @@ public class Film {
 
         likes.remove(id);
     }
+
+    public void removeAllLikes() {
+        likes.clear();
+    }
 }
