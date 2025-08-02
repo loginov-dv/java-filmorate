@@ -31,8 +31,15 @@ public class UserService {
     }
 
     // Вернуть пользователя по id
-    public Optional<User> getById(int id) {
-        return userStorage.getById(id);
+    public User getById(int id) {
+        Optional<User> maybeUser = userStorage.getById(id);
+
+        if (maybeUser.isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", id);
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        }
+
+        return maybeUser.get();
     }
 
     // Создать нового пользователя
