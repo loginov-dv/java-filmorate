@@ -43,9 +43,11 @@ public class FriendshipService {
             throw new ValidationException("Нельзя добавить пользователя в друзья к самому себе");
         }
         if (areFriends(userId, friendId)) {
-            logger.warn("Пользователи уже являются друзьями");
-            throw new ValidationException("Пользователи уже являются друзьями");
+            logger.warn("Пользователи с id = {} и id = {} уже являются друзьями", userId, friendId);
+            throw new ValidationException("Пользователи с id = " + userId + " и id = " + friendId +
+                    " уже являются друзьями");
         }
+
         logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
         friendshipStorage.addFriendship(userId, friendId);
     }
@@ -64,6 +66,7 @@ public class FriendshipService {
             logger.warn("Пользователи не являются друзьями");
             throw new ValidationException("Пользователи не являются друзьями");
         }*/
+
         logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
         friendshipStorage.removeFriendship(userId, friendId);
     }
@@ -107,6 +110,7 @@ public class FriendshipService {
         return friendshipStorage.areFriends(firstUserId, secondUserId);
     }
 
+    // Удалить все дружеские связи между всеми пользователями
     public void clear() {
         friendshipStorage.clear();
     }
