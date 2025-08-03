@@ -29,13 +29,13 @@ public class UserController {
 
     // Эндпоинт GET /users/{id}
     @GetMapping("/{id}")
-    @ResponseStatus(HttpStatus.CREATED)
     public User getById(@PathVariable int id) {
         return userService.getById(id);
     }
 
     // Эндпоинт POST /users
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public User create(@Valid @RequestBody User user) {
         return userService.create(user);
     }
