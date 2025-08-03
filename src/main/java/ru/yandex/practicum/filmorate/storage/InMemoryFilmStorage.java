@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+// Класс, реализующий хранение фильмов в оперативной памяти
 @Component
 public class InMemoryFilmStorage implements FilmStorage {
     // Мапа для хранения фильмов
@@ -22,8 +23,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     // Вернуть фильм по id
     @Override
     public Optional<Film> getById(int id) {
-        Film film = films.get(id);
-        return Optional.ofNullable(film);
+        return Optional.ofNullable(films.get(id));
     }
 
     // Создать новый фильм
