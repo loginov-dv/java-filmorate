@@ -13,6 +13,7 @@ import ru.yandex.practicum.filmorate.util.StringUtils;
 import java.util.Collection;
 import java.util.Optional;
 
+// Сервис по работе с пользователями
 @Service
 public class UserService {
     // Хранилище пользователей
@@ -76,7 +77,6 @@ public class UserService {
                 throw new ValidationException("Этот email уже используется");
             }
             userStorage.update(newUser);
-
             logger.info("Изменён пользователь: id = {}, login = {}", newUser.getId(), newUser.getLogin());
 
             return newUser;
