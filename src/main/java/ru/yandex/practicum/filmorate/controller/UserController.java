@@ -2,13 +2,14 @@ package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
 
-// Контроллер для обслуживания пользователей
+// Контроллер для работы с пользователями
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -26,7 +27,9 @@ public class UserController {
         return userService.getAll();
     }
 
+    // Эндпоинт GET /users/{id}
     @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.CREATED)
     public User getById(@PathVariable int id) {
         return userService.getById(id);
     }
@@ -43,7 +46,7 @@ public class UserController {
         return userService.update(newUser);
     }
 
-    // Вспомогательный эндпоинт DELETE /users для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {
         userService.clear();

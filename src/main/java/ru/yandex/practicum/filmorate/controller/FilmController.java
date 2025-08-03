@@ -73,7 +73,7 @@ public class FilmController {
         filmService.clearLikes();
     }
 
-    // Вспомогательный эндпоинт DELETE /films для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    // Вспомогательный эндпоинт DELETE /films для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {
         filmService.clear();
