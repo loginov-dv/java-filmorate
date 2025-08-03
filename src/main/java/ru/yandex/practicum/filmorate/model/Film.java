@@ -38,10 +38,13 @@ public class Film {
     @Builder.Default
     private Set<Integer> likes = new HashSet<>();
 
+    // Получить лайки пользователей
     public Set<Integer> getLikes() {
+        // Если поле null, то возвращаем пустой Set
         return likes == null ? Collections.emptySet() : likes;
     }
 
+    // Добавить лайк пользователя с указанным id
     public void addLike(int id) {
         if (likes == null) {
             likes = new HashSet<>();
@@ -50,6 +53,7 @@ public class Film {
         likes.add(id);
     }
 
+    // Убрать лайк пользователя с указанным id
     public void removeLike(int id) {
         if (likes == null) {
             return;
@@ -58,7 +62,12 @@ public class Film {
         likes.remove(id);
     }
 
+    // Убрать все лайки пользователей
     public void removeAllLikes() {
+        if (likes == null) {
+            return;
+        }
+
         likes.clear();
     }
 }
