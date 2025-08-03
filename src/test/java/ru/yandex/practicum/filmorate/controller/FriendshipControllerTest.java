@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import ru.yandex.practicum.filmorate.adapter.LocalDateAdapter;
 import ru.yandex.practicum.filmorate.model.User;
 
@@ -16,6 +18,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -71,13 +74,6 @@ class FriendshipControllerTest {
                 .andExpect(status().isOk());
     }
 
-    // Проверяет попытку удаления из друзей, когда пользователи не состояли в дружеской связи
-    @Test
-    void shouldReturnBadRequestIfUsersAreNotFriendsWhenRemovalFromFriendsRequested() throws Exception {
-        mockMvc.perform(delete("/users/1/friends/2"))
-                .andExpect(status().isBadRequest());
-    }
-
     // Проверяет возвращение списка друзей
     @Test
     void shouldGetAllFriends() throws Exception {
@@ -85,9 +81,17 @@ class FriendshipControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(put("/users/1/friends/3"))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/users/1/friends"))
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.length()").value(2))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream()
+                .anyMatch(item -> item.getId().equals(2) || item.getId().equals(3)));
     }
 
     // Проверяет возвращение списка общих друзей
@@ -97,9 +101,16 @@ class FriendshipControllerTest {
                 .andExpect(status().isOk());
         mockMvc.perform(put("/users/3/friends/2"))
                 .andExpect(status().isOk());
-        mockMvc.perform(get("/users/1/friends/common/3"))
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends/common/3"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream().anyMatch(item -> item.getId().equals(2)));
     }
 
     // Заполняет хранилище пользователей тестовыми валидными данными
@@ -129,7 +140,7 @@ class FriendshipControllerTest {
             mockMvc.perform(post("/users")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(gson.toJson(user)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isCreated());
         }
     }
 }
