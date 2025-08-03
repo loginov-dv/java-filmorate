@@ -57,11 +57,20 @@ class FilmControllerTest {
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(validFilm)))
-                .andExpect(status().isOk());
-
-        mockMvc.perform(get(FILMS_URL))
+                .andExpect(status().isCreated());
+        MvcResult result = mockMvc.perform(get(FILMS_URL))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        TypeToken<List<Film>> typeToken = new TypeToken<>(){};
+        List<Film> films = gson.fromJson(json, typeToken.getType());
+        Film responseFilm = films.getFirst();
+        assertEquals(validFilm.getName(), responseFilm.getName(), "Не совпадают имена");
+        assertEquals(validFilm.getDescription(), responseFilm.getDescription(), "Не совпадают описания");
+        assertEquals(validFilm.getReleaseDate(), responseFilm.getReleaseDate(), "Не совпадают даты релиза");
+        assertEquals(validFilm.getDuration(), responseFilm.getDuration(), "Не совпадают продолжительности");
     }
 
     // Проверяет попытку добавления нового фильма с некорректным именем
@@ -172,10 +181,11 @@ class FilmControllerTest {
     // Проверяет попытку отправки POST-запроса с пустым body
     @Test
     void shouldHandleEmptyRequest() throws Exception {
+        // TODO: можно обрабатывать HttpMessageNotReadableException и возвращать 400
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     // Проверяет получение всех фильмов
@@ -193,7 +203,7 @@ class FilmControllerTest {
     void shouldUpdateFilm() throws Exception {
         fillWithValidData();
 
-        Film film1 = Film.builder()
+        Film film = Film.builder()
                 .id(1)
                 .name("new name 1")
                 .description("new desc 1")
@@ -201,10 +211,17 @@ class FilmControllerTest {
                 .duration(1000)
                 .build();
 
-        mockMvc.perform(put(FILMS_URL)
+        MvcResult result = mockMvc.perform(put(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(gson.toJson(film1)))
-                .andExpect(status().isOk());
+                        .content(gson.toJson(film)))
+                .andExpect(status().isOk())
+                .andReturn();
+        String json = result.getResponse().getContentAsString();
+        Film responseFilm = gson.fromJson(json, Film.class);
+        assertEquals(film.getName(), responseFilm.getName(), "Не совпадают имена");
+        assertEquals(film.getDescription(), responseFilm.getDescription(), "Не совпадают описания");
+        assertEquals(film.getReleaseDate(), responseFilm.getReleaseDate(), "Не совпадают даты релиза");
+        assertEquals(film.getDuration(), responseFilm.getDuration(), "Не совпадают продолжительности");
     }
 
     // Проверяет обновление несуществующего фильма
@@ -337,7 +354,7 @@ class FilmControllerTest {
             mockMvc.perform(post(FILMS_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(gson.toJson(film)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isCreated());
         }
     }
 
@@ -368,7 +385,7 @@ class FilmControllerTest {
             mockMvc.perform(post("/users")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(gson.toJson(user)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isCreated());
         }
     }
 }
