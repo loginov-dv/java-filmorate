@@ -23,8 +23,7 @@ public class InMemoryUserStorage implements UserStorage {
     // Вернуть пользователя по id
     @Override
     public Optional<User> getById(int id) {
-        User user = users.get(id);
-        return Optional.ofNullable(user);
+        return Optional.ofNullable(users.get(id));
     }
 
     // Создать нового пользователя
