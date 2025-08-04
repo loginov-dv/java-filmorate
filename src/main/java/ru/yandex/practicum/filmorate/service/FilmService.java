@@ -108,9 +108,8 @@ public class FilmService {
     // Полуить список из первых count фильмов по количеству лайков
     public Collection<Film> getPopular(int count) {
         if (count <= 0) {
-            logger.warn("Количество фильмов должно быть положительным числом. Было передано: {}", count);
-            throw new ValidationException("Количество фильмов должно быть положительным числом. " +
-                    "Было передано: " + count);
+            logger.warn("Количество фильмов должно быть положительным числом");
+            throw new ValidationException("Количество фильмов должно быть положительным числом");
         }
 
         return filmStorage.getAll().stream()
