@@ -47,12 +47,17 @@ class FilmControllerTest {
     // Проверяет добавление нового фильма
     @Test
     void shouldAddNewValidFilm() throws Exception {
-        final Film validFilm = Film.builder()
+        /*final Film validFilm = Film.builder()
                 .name("name")
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
+                .build();*/
+        Film validFilm = new Film();
+        validFilm.setName("name");
+        validFilm.setDescription("description");
+        validFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        validFilm.setDuration(100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,23 +81,32 @@ class FilmControllerTest {
     // Проверяет попытку добавления нового фильма с некорректным именем
     @Test
     void shouldNotAddFilmWithInvalidName() throws Exception {
-        final Film invalidFilmWithNullName = Film.builder()
+        /*final Film invalidFilmWithNullName = Film.builder()
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
+                .build();*/
+        final Film invalidFilmWithNullName = new Film();
+        invalidFilmWithNullName.setDescription("description");
+        invalidFilmWithNullName.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilmWithNullName.setDuration(100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(invalidFilmWithNullName)))
                 .andExpect(status().isBadRequest());
 
-        final Film invalidFilmWithEmptyName = Film.builder()
+        /*final Film invalidFilmWithEmptyName = Film.builder()
                 .name("")
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
+                .build();*/
+        final Film invalidFilmWithEmptyName = new Film();
+        invalidFilmWithEmptyName.setName("");
+        invalidFilmWithEmptyName.setDescription("description");
+        invalidFilmWithEmptyName.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilmWithEmptyName.setDuration(100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,12 +123,17 @@ class FilmControllerTest {
     void shouldNotAddFilmWithInvalidDescription() throws Exception {
         final String invalidDescription = "a".repeat(201);
 
-        final Film invalidFilm = Film.builder()
+        /*final Film invalidFilm = Film.builder()
                 .name("name")
                 .description(invalidDescription)
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
+                .build();*/
+        final Film invalidFilm = new Film();
+        invalidFilm.setName("name");
+        invalidFilm.setDescription(invalidDescription);
+        invalidFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilm.setDuration(100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -129,12 +148,17 @@ class FilmControllerTest {
     // Проверяет попытку добавления нового фильма с некорректной датой релиза
     @Test
     void shouldNotAddFilmWithInvalidReleaseDate() throws Exception {
-        final Film invalidFilm = Film.builder()
+        /*final Film invalidFilm = Film.builder()
                 .name("name")
                 .description("description")
                 .releaseDate(LocalDate.of(1776, 7, 4))
                 .duration(100)
-                .build();
+                .build();*/
+        final Film invalidFilm = new Film();
+        invalidFilm.setName("name");
+        invalidFilm.setDescription("description");
+        invalidFilm.setReleaseDate(LocalDate.of(1776, 7, 4));
+        invalidFilm.setDuration(100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -149,24 +173,34 @@ class FilmControllerTest {
     // Проверяет попытку добавления нового фильма с некорректной длительностью
     @Test
     void shouldNotAddFilmWithIncorrectDuration() throws Exception {
-        final Film invalidFilmWithZeroDuration = Film.builder()
+        /*final Film invalidFilmWithZeroDuration = Film.builder()
                 .name("name")
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(0)
-                .build();
+                .build();*/
+        final Film invalidFilmWithZeroDuration = new Film();
+        invalidFilmWithZeroDuration.setName("name");
+        invalidFilmWithZeroDuration.setDescription("description");
+        invalidFilmWithZeroDuration.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilmWithZeroDuration.setDuration(0);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(invalidFilmWithZeroDuration)))
                 .andExpect(status().isBadRequest());
 
-        final Film invalidFilmWithNegativeDuration = Film.builder()
+        /*final Film invalidFilmWithNegativeDuration = Film.builder()
                 .name("name")
                 .description("description")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(-100)
-                .build();
+                .build();*/
+        final Film invalidFilmWithNegativeDuration = new Film();
+        invalidFilmWithNegativeDuration.setName("name");
+        invalidFilmWithNegativeDuration.setDescription("description");
+        invalidFilmWithNegativeDuration.setReleaseDate(LocalDate.of(2000, 1, 1));
+        invalidFilmWithNegativeDuration.setDuration(-100);
 
         mockMvc.perform(post(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -203,13 +237,19 @@ class FilmControllerTest {
     void shouldUpdateFilm() throws Exception {
         fillWithValidData();
 
-        Film film = Film.builder()
+        /*Film film = Film.builder()
                 .id(1)
                 .name("new name 1")
                 .description("new desc 1")
                 .releaseDate(LocalDate.of(2010, 10, 10))
                 .duration(1000)
-                .build();
+                .build();*/
+        Film film = new Film();
+        film.setId(1);
+        film.setName("new name 1");
+        film.setDescription("new desc 1");
+        film.setReleaseDate(LocalDate.of(2010, 10, 10));
+        film.setDuration(1000);
 
         MvcResult result = mockMvc.perform(put(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -229,13 +269,19 @@ class FilmControllerTest {
     void shouldNotUpdateUnknownFilm() throws Exception {
         fillWithValidData();
 
-        Film film1 = Film.builder()
+        /*Film film1 = Film.builder()
                 .id(100)
                 .name("new name 1")
                 .description("new desc 1")
                 .releaseDate(LocalDate.of(2010, 10, 10))
                 .duration(1000)
-                .build();
+                .build();*/
+        Film film1 = new Film();
+        film1.setId(100);
+        film1.setName("new name 1");
+        film1.setDescription("new desc 1");
+        film1.setReleaseDate(LocalDate.of(2010, 10, 10));
+        film1.setDuration(1000);
 
         mockMvc.perform(put(FILMS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -330,24 +376,39 @@ class FilmControllerTest {
 
     // Заполняет хранилище фильмов тестовыми валидными данными
     void fillWithValidData() throws Exception {
-        Film film1 = Film.builder()
+        /*Film film1 = Film.builder()
                 .name("name 1")
                 .description("desc 1")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
-        Film film2 = Film.builder()
+                .build();*/
+        Film film1 = new Film();
+        film1.setName("name 1");
+        film1.setDescription("desc 1");
+        film1.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film1.setDuration(100);
+        /*Film film2 = Film.builder()
                 .name("name 2")
                 .description("desc 2")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
-        Film film3 = Film.builder()
+                .build();*/
+        Film film2 = new Film();
+        film2.setName("name 2");
+        film2.setDescription("desc 2");
+        film2.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film2.setDuration(100);
+        /*Film film3 = Film.builder()
                 .name("name 3")
                 .description("desc 3")
                 .releaseDate(LocalDate.of(2000, 1, 1))
                 .duration(100)
-                .build();
+                .build();*/
+        Film film3 = new Film();
+        film3.setName("name 3");
+        film3.setDescription("desc 3");
+        film3.setReleaseDate(LocalDate.of(2000, 1, 1));
+        film3.setDuration(100);
         List<Film> films = List.of(film1, film2, film3);
 
         for (Film film : films) {
