@@ -6,14 +6,12 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 // Модель данных для описания фильма
 @Getter
 @Setter
-@Builder
 @EqualsAndHashCode(exclude = {"id", "description", "likes"})
 @ToString
 public class Film {
@@ -34,15 +32,7 @@ public class Film {
     private int duration;
     // Лайки пользователей
     @Setter(AccessLevel.NONE)
-    @Getter(AccessLevel.NONE)
-    @Builder.Default
     private Set<Integer> likes = new HashSet<>();
-
-    // Получить лайки пользователей
-    public Set<Integer> getLikes() {
-        // Если поле null, то возвращаем пустой Set
-        return likes == null ? Collections.emptySet() : likes;
-    }
 
     // Добавить лайк пользователя с указанным id
     public void addLike(int id) {
