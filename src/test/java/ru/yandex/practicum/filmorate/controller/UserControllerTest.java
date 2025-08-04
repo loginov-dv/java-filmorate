@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,6 +41,7 @@ class UserControllerTest {
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(USERS_URL + "/clear"));
+        mockMvc.perform(delete(USERS_URL + "/friends/clear"));
     }
 
     // Проверяет добавление нового пользователя
@@ -364,6 +366,91 @@ class UserControllerTest {
 
         mockMvc.perform(get(USERS_URL + "/4"))
                 .andExpect(status().isNotFound());
+    }
+
+    // Проверяет добавление двух пользователей в друзья
+    @Test
+    void shouldAddToFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+    }
+
+    // Проверяет попытку добавления в друзья пользователя, которого не существует
+    @Test
+    void shouldReturnNotFoundIfOneOfUsersDoesntExist() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/4"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(put("/users/4/friends/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    // Проверяет повторную попытку добавления в друзья
+    @Test
+    void shouldReturnBadRequestIfUsersAreAlreadyFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Проверяет удаление из друзей
+    @Test
+    void shouldRemoveFromFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/users/1/friends/2"))
+                .andExpect(status().isOk());
+    }
+
+    // Проверяет возвращение списка друзей
+    @Test
+    void shouldGetAllFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/1/friends/3"))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream()
+                .anyMatch(item -> item.getId().equals(2) || item.getId().equals(3)));
+    }
+
+    // Проверяет возвращение списка общих друзей
+    @Test
+    void shouldGetCommonFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/3/friends/2"))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends/common/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream().anyMatch(item -> item.getId().equals(2)));
     }
 
     // Заполняет хранилище пользователей тестовыми валидными данными
