@@ -48,8 +48,8 @@ public class UserController {
 
     // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
-    public void clearUsers() {
-        userService.clearUsers();
+    public void clearAllUsers() {
+        userService.clearAllUsers();
     }
 
     // Эндпоинт PUT /users/{id}/friends/{friendId}
@@ -82,7 +82,7 @@ public class UserController {
     // Вспомогательный эндпоинт DELETE /users/friends/clear для удаления всех дружеских связей
     // (для обеспечения изоляции тестов)
     @DeleteMapping("/friends/clear")
-    public void clearFriends() {
-        userService.clearFriends();
+    public void clearAllFriendships() {
+        userService.clearAllFriendships();
     }
 }

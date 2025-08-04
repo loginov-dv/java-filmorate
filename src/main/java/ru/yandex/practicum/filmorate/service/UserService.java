@@ -93,7 +93,7 @@ public class UserService {
     }
 
     // Удалить всех пользователей
-    public void clearUsers() {
+    public void clearAllUsers() {
         userStorage.clear();
     }
 
@@ -181,7 +181,7 @@ public class UserService {
     }
 
     // Удалить все дружеские связи между всеми пользователями
-    public void clearFriends() {
+    public void clearAllFriendships() {
         friendshipStorage.clear();
     }
 }
