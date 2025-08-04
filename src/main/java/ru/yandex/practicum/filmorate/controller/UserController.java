@@ -48,7 +48,41 @@ public class UserController {
 
     // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
-    public void clear() {
-        userService.clear();
+    public void clearUsers() {
+        userService.clearUsers();
+    }
+
+    // Эндпоинт PUT /users/{id}/friends/{friendId}
+    @PutMapping("/{id}/friends/{friendId}")
+    public void addFriend(@PathVariable int id,
+                          @PathVariable int friendId) {
+        userService.addFriend(id, friendId);
+    }
+
+    // Эндпоинт DELETE /users/{id}/friends/{friendId}
+    @DeleteMapping("/{id}/friends/{friendId}")
+    public void removeFriend(@PathVariable int id,
+                             @PathVariable int friendId) {
+        userService.removeFriend(id, friendId);
+    }
+
+    // Эндпоинт GET /users/{id}/friends
+    @GetMapping("/{id}/friends")
+    public Collection<User> getFriends(@PathVariable int id) {
+        return userService.getFriends(id);
+    }
+
+    // Эндпоинт GET /users/{id}/friends/common/{otherId}
+    @GetMapping("/{id}/friends/common/{otherId}")
+    public Collection<User> getCommonFriends(@PathVariable int id,
+                                             @PathVariable int otherId) {
+        return userService.getCommonFriends(id, otherId);
+    }
+
+    // Вспомогательный эндпоинт DELETE /users/friends/clear для удаления всех дружеских связей
+    // (для обеспечения изоляции тестов)
+    @DeleteMapping("/friends/clear")
+    public void clearFriends() {
+        userService.clearFriends();
     }
 }
