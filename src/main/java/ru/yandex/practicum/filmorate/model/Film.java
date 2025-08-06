@@ -3,14 +3,17 @@ package ru.yandex.practicum.filmorate.model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 // Модель данных для описания фильма
-@Data
-@Builder
+@Getter
+@Setter
+@EqualsAndHashCode(exclude = {"id", "description", "likes"})
+@ToString
 public class Film {
     // Идентификатор
     private Integer id;
@@ -27,4 +30,34 @@ public class Film {
     // Продолжительность
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
+    // Лайки пользователей
+    @Setter(AccessLevel.NONE)
+    private Set<Integer> likes = new HashSet<>();
+
+    // Добавить лайк пользователя с указанным id
+    public void addLike(int id) {
+        if (likes == null) {
+            likes = new HashSet<>();
+        }
+
+        likes.add(id);
+    }
+
+    // Убрать лайк пользователя с указанным id
+    public void removeLike(int id) {
+        if (likes == null) {
+            return;
+        }
+
+        likes.remove(id);
+    }
+
+    // Убрать все лайки пользователей
+    public void removeAllLikes() {
+        if (likes == null) {
+            return;
+        }
+
+        likes.clear();
+    }
 }

@@ -1,81 +1,81 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import ru.yandex.practicum.filmorate.exception.NotFoundException;
-import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
-// Контроллер для обслуживания фильмов
+// Контроллер для работы с фильмами
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
-    // Мапа для хранения фильмов
-    private final Map<Integer, Film> films = new HashMap<>();
+    // Сервис работы с фильмами
+    private final FilmService filmService;
+
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
 
     // Эндпоинт GET /films
     @GetMapping
     public Collection<Film> getAll() {
-        return films.values();
+        return filmService.getAll();
+    }
+
+    // Эндпоинт GET /films/{id}
+    @GetMapping("/{id}")
+    public Film getById(@PathVariable int id) {
+        return filmService.getById(id);
     }
 
     // Эндпоинт POST /films
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public Film create(@Valid @RequestBody Film film) {
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
-
-        return film;
+        return filmService.create(film);
     }
 
     // Эндпоинт PUT /films
     @PutMapping
     public Film update(@Valid @RequestBody Film newFilm) {
-        if (newFilm.getId() == null) {
-            logger.warn("Не указан id");
-            throw new ValidationException("Не указан id");
-        }
-
-        if (films.containsKey(newFilm.getId())) {
-            Film oldFilm = films.get(newFilm.getId());
-
-            oldFilm.setName(newFilm.getName());
-            oldFilm.setDescription(newFilm.getDescription());
-            oldFilm.setReleaseDate(newFilm.getReleaseDate());
-            oldFilm.setDuration(newFilm.getDuration());
-
-            logger.info("Изменён фильм: id = {}, name = {}", oldFilm.getId(), oldFilm.getName());
-
-            return oldFilm;
-        }
-
-        logger.warn("Фильм с id = {} не найден", newFilm.getId());
-        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+        return filmService.update(newFilm);
     }
 
-    // Вспомогательный эндпоинт DELETE /films для удаления элементов в мапе (чтобы обеспечить изоляцию тестов)
+    // Эндпоинт PUT /films/{id}/like/{userId}
+    @PutMapping("/{id}/like/{userId}")
+    public void putLike(@PathVariable int id,
+                        @PathVariable int userId) {
+        filmService.putLike(id, userId);
+    }
+
+    // Эндпоинт DELETE /films/{id}/like/{userId}
+    @DeleteMapping("/{id}/like/{userId}")
+    public void removeLike(@PathVariable int id,
+                           @PathVariable int userId) {
+        filmService.removeLike(id, userId);
+    }
+
+    // Эндпоинт GET /films/popular/count?=count
+    @GetMapping("/popular")
+    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+        return filmService.getPopular(count);
+    }
+
+    // Вспомогательный эндпоинт DELETE /films/likes/clear (для удаления всех лайков и изоляции тестов)
+    @DeleteMapping("/likes/clear")
+    public void clearLikes() {
+        filmService.clearLikes();
+    }
+
+    // Вспомогательный эндпоинт DELETE /films для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clear() {
-        films.clear();
-    }
-
-    // Вспомогательный метод для генерации идентификаторов
-    private int getNextId() {
-        int currentMaxId = films.keySet()
-                .stream()
-                .mapToInt(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+        filmService.clear();
     }
 }

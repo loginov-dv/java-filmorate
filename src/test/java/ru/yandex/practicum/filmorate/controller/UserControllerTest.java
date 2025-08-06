@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,12 +10,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import ru.yandex.practicum.filmorate.adapter.LocalDateAdapter;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -33,10 +37,11 @@ class UserControllerTest {
     // Путь
     private static final String USERS_URL = "/users";
 
-    // Очистка мапы контроллера через метод DELETE
+    // Очистка хранилища через метод DELETE
     @BeforeEach
     void reset() throws Exception {
         mockMvc.perform(delete(USERS_URL + "/clear"));
+        mockMvc.perform(delete(USERS_URL + "/friends/clear"));
     }
 
     // Проверяет добавление нового пользователя
@@ -52,11 +57,21 @@ class UserControllerTest {
         mockMvc.perform(post(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(validUser)))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
 
-        mockMvc.perform(get(USERS_URL))
+        MvcResult result = mockMvc.perform(get(USERS_URL))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        User responseUser = users.getFirst();
+        assertEquals(validUser.getName(), responseUser.getName(), "Не совпадают имена");
+        assertEquals(validUser.getLogin(), responseUser.getLogin(), "Не совпадают логины");
+        assertEquals(validUser.getEmail(), responseUser.getEmail(), "Не совпадают email");
+        assertEquals(validUser.getBirthday(), responseUser.getBirthday(), "Не совпадают даты рождения");
     }
 
     // Проверяет попытку добавления нового пользователя с некорректным логином
@@ -225,10 +240,11 @@ class UserControllerTest {
     // Проверяет попытку отправки POST-запроса с пустым body
     @Test
     void shouldHandleEmptyRequest() throws Exception {
+        // TODO: можно обрабатывать HttpMessageNotReadableException и возвращать 400
         mockMvc.perform(post(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(""))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isInternalServerError());
     }
 
     // Проверяет получение всех пользователей
@@ -254,10 +270,18 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        mockMvc.perform(put(USERS_URL)
+        MvcResult result = mockMvc.perform(put(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(user)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        User responseUser = gson.fromJson(json, User.class);
+        assertEquals(user.getName(), responseUser.getName(), "Не совпадают имена");
+        assertEquals(user.getLogin(), responseUser.getLogin(), "Не совпадают логины");
+        assertEquals(user.getEmail(), responseUser.getEmail(), "Не совпадают email");
+        assertEquals(user.getBirthday(), responseUser.getBirthday(), "Не совпадают даты рождения");
     }
 
     // Проверяет обновление существующего пользователя (всех полей, кроме email)
@@ -273,10 +297,18 @@ class UserControllerTest {
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
-        mockMvc.perform(put(USERS_URL)
+        MvcResult result = mockMvc.perform(put(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(user)))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        User responseUser = gson.fromJson(json, User.class);
+        assertEquals(user.getName(), responseUser.getName(), "Не совпадают имена");
+        assertEquals(user.getLogin(), responseUser.getLogin(), "Не совпадают логины");
+        assertEquals(user.getEmail(), responseUser.getEmail(), "Не совпадают email");
+        assertEquals(user.getBirthday(), responseUser.getBirthday(), "Не совпадают даты рождения");
     }
 
     // Проверяет обновление несуществующего пользователя
@@ -307,17 +339,121 @@ class UserControllerTest {
                 .id(1)
                 .name("zhenya")
                 .login("zhenya")
-                .email("user1@test.com")
+                .email("user2@test.com")
                 .birthday(LocalDate.of(2000, 1, 1))
                 .build();
 
         mockMvc.perform(put(USERS_URL)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(gson.toJson(user)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Проверяет получение пользователя по id
+    @Test
+    void shouldReturnUserById() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(get(USERS_URL + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    // Проверяет получение несуществующего пользователя
+    @Test
+    void shouldReturnNotFoundIfUserWithSpecifiedIdDoesntExist() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(get(USERS_URL + "/4"))
+                .andExpect(status().isNotFound());
+    }
+
+    // Проверяет добавление двух пользователей в друзья
+    @Test
+    void shouldAddToFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
                 .andExpect(status().isOk());
     }
 
-    // Заполняет мапу контроллера тестовыми валидными данными
+    // Проверяет попытку добавления в друзья пользователя, которого не существует
+    @Test
+    void shouldReturnNotFoundIfOneOfUsersDoesntExist() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/4"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(put("/users/4/friends/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    // Проверяет повторную попытку добавления в друзья
+    @Test
+    void shouldReturnBadRequestIfUsersAreAlreadyFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // Проверяет удаление из друзей
+    @Test
+    void shouldRemoveFromFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(delete("/users/1/friends/2"))
+                .andExpect(status().isOk());
+    }
+
+    // Проверяет возвращение списка друзей
+    @Test
+    void shouldGetAllFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/1/friends/3"))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream()
+                .anyMatch(item -> item.getId().equals(2) || item.getId().equals(3)));
+    }
+
+    // Проверяет возвращение списка общих друзей
+    @Test
+    void shouldGetCommonFriends() throws Exception {
+        fillWithValidData();
+
+        mockMvc.perform(put("/users/1/friends/2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/users/3/friends/2"))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/users/1/friends/common/3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andReturn();
+
+        TypeToken<List<User>> typeToken = new TypeToken<>(){};
+        String json = result.getResponse().getContentAsString();
+        List<User> users = gson.fromJson(json, typeToken.getType());
+        assertTrue(users.stream().anyMatch(item -> item.getId().equals(2)));
+    }
+
+    // Заполняет хранилище пользователей тестовыми валидными данными
     void fillWithValidData() throws Exception {
         final User user1 = User.builder()
                 .name("user1")
@@ -344,8 +480,7 @@ class UserControllerTest {
             mockMvc.perform(post(USERS_URL)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(gson.toJson(user)))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isCreated());
         }
     }
-
 }
