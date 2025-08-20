@@ -1,2 +1,13 @@
-# java-filmorate
-Template repository for Filmorate project.
+# Диаграмма БД
+
+![ER-diagram](/database-diagram.png)
+
+## Описание таблиц
+
+* `film` - фильмы
+* `genre` - жанр
+* `rating` - MPA-рейтинг
+* `film_genre` - промежуточная таблица для связи фильмов и жанров (у фильма может быть несколько жанров)
+* `user` - пользователь
+* `film_likes` - промежуточная таблица для лайков пользователей
+* `friendship` - промежуточная таблица для дружеских связей
