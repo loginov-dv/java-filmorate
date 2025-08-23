@@ -32,7 +32,7 @@ public class BaseRepository<T> {
         return jdbcTemplate.query(query, rowMapper, params);
     }
 
-    protected boolean delete(String query, int id) {
+    public boolean delete(String query, int id) {
         int rowsDeleted = jdbcTemplate.update(query, id);
         return rowsDeleted > 0;
     }
