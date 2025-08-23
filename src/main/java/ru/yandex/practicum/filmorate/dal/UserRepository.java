@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.dal;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -15,6 +16,7 @@ public class UserRepository extends BaseRepository<User> {
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
 
+    @Autowired
     public UserRepository(JdbcTemplate jdbcTemplate, RowMapper<User> rowMapper) {
         super(jdbcTemplate, rowMapper);
     }
