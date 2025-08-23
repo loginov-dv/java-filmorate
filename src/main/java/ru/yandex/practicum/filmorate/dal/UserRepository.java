@@ -15,6 +15,11 @@ public class UserRepository extends BaseRepository<User> {
     private static final String TABLE_NAME = "users";
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
+    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME +
+            "(email, login, name, birthday)" +
+            "VALUES (?, ?, ?, ?) returning id";
+    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
+            "SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
 
     @Autowired
     public UserRepository(JdbcTemplate jdbcTemplate, RowMapper<User> rowMapper) {
@@ -27,5 +32,29 @@ public class UserRepository extends BaseRepository<User> {
 
     public Optional<User> getById(int userId) {
         return findOne(FIND_BY_ID_QUERY, userId);
+    }
+
+    public User create(User user) {
+        int id = insert(INSERT_QUERY,
+                user.getEmail(),
+                user.getLogin(),
+                user.getName(),
+                user.getBirthday()
+        );
+        user.setId(id);
+
+        return user;
+    }
+
+    public User update(User user) {
+        update(UPDATE_QUERY,
+                user.getEmail(),
+                user.getLogin(),
+                user.getName(),
+                user.getBirthday(),
+                user.getId()
+        );
+
+        return user;
     }
 }
