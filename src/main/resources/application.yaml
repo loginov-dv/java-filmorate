@@ -1,4 +1,8 @@
-logging.level.org.zalando.logbook: TRACE
+logging:
+  level:
+    root: INFO
+    org.zalando.logbook: TRACE
+    ru.yandex.practicum.filmorate: DEBUG
 
 spring:
   sql.init.mode: always
