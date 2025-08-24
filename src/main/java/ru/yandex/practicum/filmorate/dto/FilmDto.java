@@ -8,7 +8,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Set;
 
 // Film data transfer object
 @Data
@@ -26,5 +26,5 @@ public class FilmDto {
     private int duration;
 
     private MpaIdDto mpa;
-    private List<GenreIdDto> genres;
+    private Set<GenreIdDto> genres;
 }
