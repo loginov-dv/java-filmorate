@@ -4,94 +4,98 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 // Сервис по работе с пользователями
+// TODO: logs
 @Service
 public class UserService {
-    // Хранилище пользователей
-    private final UserStorage userStorage;
+    // Репозиторий пользователей
+    private final UserRepository userRepository;
+
     // Хранилище дружеских связей пользователей
-    private final FriendshipStorage friendshipStorage;
+    //private final FriendshipStorage friendshipStorage;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
-    public UserService(UserStorage userStorage, FriendshipStorage friendshipStorage) {
-        this.userStorage = userStorage;
-        this.friendshipStorage = friendshipStorage;
+    public UserService(UserRepository userRepository/*, FriendshipStorage friendshipStorage*/) {
+        this.userRepository = userRepository;
+        //this.friendshipStorage = friendshipStorage;
     }
 
     // Вернуть всех пользователей
-    public Collection<User> getAll() {
-        return userStorage.getAll();
+    public List<UserDto> getAll() {
+        return userRepository.getAll().stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
     }
 
     // Вернуть пользователя по id
-    public User getById(int id) {
-        Optional<User> maybeUser = userStorage.getById(id);
+    public UserDto getById(int id) {
+        Optional<User> maybeUser = userRepository.getById(id);
 
         if (maybeUser.isEmpty()) {
             logger.warn("Пользователь с id = {} не найден", id);
             throw new NotFoundException("Пользователь с id = " + id + " не найден");
         }
 
-        return maybeUser.get();
+        return UserMapper.mapToUserDto(maybeUser.get());
     }
 
     // Создать нового пользователя
-    public User create(User user) {
-        if (userStorage.getAll().contains(user)) {
+    public UserDto create(NewUserRequest request) {
+        if (userRepository.getByEmail(request.getEmail()).isPresent()) {
             logger.warn("Этот email уже используется");
             throw new ValidationException("Этот email уже используется");
         }
 
-        user.setId(userStorage.getNextId());
-        if (StringUtils.isNullOrEmpty(user.getName())) {
-            user.setName(user.getLogin());
-        }
-        userStorage.create(user);
+        User user = UserMapper.mapToUser(request);
+        user = userRepository.create(user);
+
         logger.info("Создан пользователь: id = {}, login = {}", user.getId(), user.getLogin());
 
-        return user;
+        return UserMapper.mapToUserDto(user);
     }
 
     // Изменить пользователя
-    public User update(User newUser) {
-        if (newUser.getId() == null) {
-            logger.warn("Не указан id");
-            throw new ValidationException("Не указан id");
+    public UserDto update(int id, UpdateUserRequest request) {
+        Optional<User> maybeUser = userRepository.getById(id);
+
+        if (maybeUser.isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", id);
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
         }
 
-        Optional<User> maybeUser = userStorage.getById(newUser.getId());
-        if (maybeUser.isPresent()) {
-            User oldUser = maybeUser.get();
-
-            String newEmail = newUser.getEmail();
-            if (!newEmail.equals(oldUser.getEmail()) && userStorage.getAll().contains(newUser)) {
-                logger.warn("Этот email уже используется");
-                throw new ValidationException("Этот email уже используется");
-            }
-            userStorage.update(newUser);
-            logger.info("Изменён пользователь: id = {}, login = {}", newUser.getId(), newUser.getLogin());
-
-            return newUser;
+        if (!maybeUser.get().getEmail().equals(request.getEmail())
+                && userRepository.getByEmail(request.getEmail()).isPresent()) {
+            logger.warn("Этот email уже используется");
+            throw new ValidationException("Этот email уже используется");
         }
 
-        logger.warn("Пользователь с id = {} не найден", newUser.getId());
-        throw new NotFoundException("Пользователь с id = " + newUser.getId() + " не найден");
+        User updatedUser = UserMapper.updateUserFields(maybeUser.get(), request);
+        updatedUser = userRepository.update(updatedUser);
+
+        return UserMapper.mapToUserDto(updatedUser);
     }
 
+    /*
     // Удалить всех пользователей
     public void clearAllUsers() {
         userStorage.clear();
@@ -184,4 +188,5 @@ public class UserService {
     public void clearAllFriendships() {
         friendshipStorage.clear();
     }
+    */
 }
