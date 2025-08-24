@@ -8,9 +8,12 @@ import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
 import ru.yandex.practicum.filmorate.dal.MpaRepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.GenreIdDto;
+import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -18,6 +21,7 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 // Сервис по работе с фильмами
@@ -87,12 +91,36 @@ public class FilmService {
     }
 
     // Создать новый фильм
-    public Film create(Film film) {
-        film.setId(filmRepository.getNextId());
+    public FilmDto create(NewFilmRequest request) {
+        Optional<MpaRating> maybeRating = mpaRepository.getById(request.getMpa().getId());
+
+        if (maybeRating.isEmpty()) {
+            logger.warn("Рейтинг с id = {} не найден", request.getMpa().getId());
+            throw new NotFoundException("Рейтинг с id = " + request.getMpa().getId() + " не найден");
+        }
+
+        // TODO: null?
+        // TODO: duplicates
+        Set<Genre> genres = new HashSet<>();
+        for (GenreIdDto genreIdDto : request.getGenres()) {
+            Optional<Genre> maybeGenre = genreRepository.getById(genreIdDto.getId());
+
+            if (maybeGenre.isEmpty()) {
+                logger.warn("Жанр с id = {} не найден", genreIdDto.getId());
+                throw new NotFoundException("Жанр с id = " + genreIdDto.getId() + " не найден");
+            }
+
+            genres.add(maybeGenre.get());
+        }
+
+        MpaRating mpaRating = maybeRating.get();
+
+        Film film = FilmMapper.mapToFilm(request, mpaRating, genres);
+
         filmRepository.create(film);
         logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
 
-        return film;
+        return FilmMapper.mapToFilmDto(film);
     }
 
     // Изменить фильм
