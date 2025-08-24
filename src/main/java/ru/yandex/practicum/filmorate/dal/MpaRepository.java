@@ -19,8 +19,6 @@ public class MpaRepository extends BaseRepository<MpaRating> {
     // Запросы
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
-    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME + "(name) VALUES (?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " SET name = ? WHERE id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(MpaRepository.class);
 
@@ -37,20 +35,5 @@ public class MpaRepository extends BaseRepository<MpaRating> {
     public Optional<MpaRating> getById(int mpaId) {
         logger.debug("Запрос на получение рейтинга с id = {}", mpaId);
         return findOne(FIND_BY_ID_QUERY, mpaId);
-    }
-
-    public MpaRating create(MpaRating mpa) {
-        int id = insert(INSERT_QUERY, mpa.getName());
-        mpa.setId(id);
-
-        logger.debug("Запрос на добавление рейтинга: id = {}, name = {}", mpa.getId(), mpa.getName());
-        return mpa;
-    }
-
-    public MpaRating update(MpaRating mpa) {
-        update(UPDATE_QUERY, mpa.getName());
-
-        logger.debug("Запрос на обновление рейтинга: id = {}, name = {}", mpa.getId(), mpa.getName());
-        return mpa;
     }
 }
