@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
@@ -44,9 +45,10 @@ public class FilmController {
     }
 
     // Эндпоинт PUT /films
-    @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        return filmService.update(newFilm);
+    // TODO: valid?
+    @PutMapping("/{id}")
+    public FilmDto update(@PathVariable int id, @Valid @RequestBody UpdateFilmRequest request) {
+        return filmService.update(id, request);
     }
 
     /*
