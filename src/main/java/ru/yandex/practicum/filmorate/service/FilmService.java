@@ -10,6 +10,7 @@ import ru.yandex.practicum.filmorate.dal.MpaRepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.GenreIdDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -124,22 +125,21 @@ public class FilmService {
     }
 
     // Изменить фильм
-    public Film update(Film newFilm) {
-        if (newFilm.getId() == null) {
-            logger.warn("Не указан id");
-            throw new ValidationException("Не указан id");
+    public FilmDto update(int id, UpdateFilmRequest request) {
+        // TODO: mpa & genres?
+        Optional<Film> maybeFilm = filmRepository.getById(id);
+
+        if (maybeFilm.isEmpty()) {
+            logger.warn("Фильм с id = {} не найден", id);
+            throw new NotFoundException("Фильм с id = " + id + " не найден");
         }
 
-        Optional<Film> maybeFilm = filmRepository.getById(newFilm.getId());
-        if (maybeFilm.isPresent()) {
-            filmRepository.update(newFilm);
-            logger.info("Изменён фильм: id = {}, name = {}", newFilm.getId(), newFilm.getName());
+        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request);
+        updatedFilm = filmRepository.update(updatedFilm);
 
-            return newFilm;
-        }
+        logger.info("Изменён фильм с id = {}", updatedFilm.getId());
 
-        logger.warn("Фильм с id = {} не найден", newFilm.getId());
-        throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
+        return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
     /*
