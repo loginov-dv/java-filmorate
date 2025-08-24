@@ -4,10 +4,14 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.NewUserRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
+import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.Collection;
+import java.util.List;
 
 // Контроллер для работы с пользователями
 @RestController
@@ -23,29 +27,30 @@ public class UserController {
 
     // Эндпоинт GET /users
     @GetMapping
-    public Collection<User> getAll() {
+    public List<UserDto> getAll() {
         return userService.getAll();
     }
 
     // Эндпоинт GET /users/{id}
     @GetMapping("/{id}")
-    public User getById(@PathVariable int id) {
+    public UserDto getById(@PathVariable int id) {
         return userService.getById(id);
     }
 
     // Эндпоинт POST /users
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public User create(@Valid @RequestBody User user) {
-        return userService.create(user);
+    public UserDto create(@Valid @RequestBody NewUserRequest request) {
+        return userService.create(request);
     }
 
     // Эндпоинт PUT /users
-    @PutMapping
-    public User update(@Valid @RequestBody User newUser) {
-        return userService.update(newUser);
+    @PutMapping("/{id}")
+    public UserDto update(@PathVariable int id, @Valid @RequestBody UpdateUserRequest request) {
+        return userService.update(id, request);
     }
 
+    /*
     // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
     @DeleteMapping("/clear")
     public void clearAllUsers() {
@@ -85,4 +90,5 @@ public class UserController {
     public void clearAllFriendships() {
         userService.clearAllFriendships();
     }
+    */
 }
