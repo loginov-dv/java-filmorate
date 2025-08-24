@@ -6,11 +6,9 @@ import lombok.Data;
 
 // Модель данных для описания рейтинга Ассоциации кинокомпаний
 @Data
-@Builder
 public class MpaRating {
     // Идентификатор
     private Integer id;
     // Наименование
-    @NotBlank
     private String name;
 }
