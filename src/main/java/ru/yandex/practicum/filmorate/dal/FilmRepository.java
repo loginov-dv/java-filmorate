@@ -25,6 +25,8 @@ public class FilmRepository extends BaseRepository<Film> {
             "VALUES(?, ?, ?, ?, ?)";
     private static final String INSERT_FILM_GENRE_QUERY = "INSERT INTO film_genres(film_id, genre_id) " +
             "VALUES(?, ?)";
+    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
+            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
 
@@ -61,6 +63,19 @@ public class FilmRepository extends BaseRepository<Film> {
             insert(INSERT_FILM_GENRE_QUERY, film.getId(), genre.getId());
             logger.debug("Добавлен жанр с id = {} для фильма с id = {}", genre.getId(), film.getId());
         }
+
+        return film;
+    }
+
+    public Film update(Film film) {
+        update(UPDATE_QUERY,
+                film.getName(),
+                film.getDescription(),
+                film.getReleaseDate(),
+                film.getDuration(),
+                film.getId());
+
+        logger.debug("Обновлен фильм с id = {}", film.getId());
 
         return film;
     }
