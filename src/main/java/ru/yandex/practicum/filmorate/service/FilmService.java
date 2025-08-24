@@ -4,53 +4,91 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.dal.GenreRepository;
+import ru.yandex.practicum.filmorate.dal.MpaRepository;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.Collection;
-import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 // Сервис по работе с фильмами
 @Service
 public class FilmService {
-    // Хранилище фильмов
-    private final FilmStorage filmStorage;
+    // Репозиторий фильмов
+    private final FilmRepository filmRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmService.class);
     // Сервис по работе с пользователями
     private final UserService userService;
+    // Репозиторий рейтингов
+    private final MpaRepository mpaRepository;
+    // Репозиторий жанров
+    private final GenreRepository genreRepository;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage, UserService userService) {
-        this.filmStorage = filmStorage;
+    public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
+                       MpaRepository mpaRepository, UserService userService) {
+        this.filmRepository = filmRepository;
+        this.genreRepository = genreRepository;
+        this.mpaRepository = mpaRepository;
         this.userService = userService;
     }
 
     // Вернуть все фильмы
-    public Collection<Film> getAll() {
-        return filmStorage.getAll();
+    public List<Film> getAll() {
+        List<Film> films = filmRepository.getAll();
+        for (Film film : films) {
+            getMpaAndGenres(film);
+        }
+
+        return films;
     }
 
     // Вернуть фильм по id
-    public Film getById(int id) {
-        Optional<Film> maybeFilm = filmStorage.getById(id);
+    public FilmDto getById(int id) {
+        Optional<Film> maybeFilm = filmRepository.getById(id);
 
         if (maybeFilm.isEmpty()) {
             logger.warn("Фильм с id = {} не найден", id);
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         }
 
-        return maybeFilm.get();
+        Film film = getMpaAndGenres(maybeFilm.get());
+
+        return FilmMapper.mapToFilmDto(film);
+    }
+
+    private Film getMpaAndGenres(Film film) {
+        Optional<MpaRating> maybeRating = mpaRepository.getById(film.getRating().getId());
+
+        // TODO: logs
+        if (maybeRating.isEmpty()) {
+            logger.warn("Рейтинг с id = {} не найден", film.getRating().getId());
+            throw new NotFoundException("Рейтинг с id = " + film.getRating().getId() + " не найден");
+        }
+
+        List<Genre> genres = genreRepository.getByFilmId(film.getId());
+
+        film.setRating(maybeRating.get());
+        film.setGenres(new HashSet<>(genres));
+
+        return film;
     }
 
     // Создать новый фильм
     public Film create(Film film) {
-        film.setId(filmStorage.getNextId());
-        filmStorage.create(film);
+        film.setId(filmRepository.getNextId());
+        filmRepository.create(film);
         logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
 
         return film;
@@ -63,9 +101,9 @@ public class FilmService {
             throw new ValidationException("Не указан id");
         }
 
-        Optional<Film> maybeFilm = filmStorage.getById(newFilm.getId());
+        Optional<Film> maybeFilm = filmRepository.getById(newFilm.getId());
         if (maybeFilm.isPresent()) {
-            filmStorage.update(newFilm);
+            filmRepository.update(newFilm);
             logger.info("Изменён фильм: id = {}, name = {}", newFilm.getId(), newFilm.getName());
 
             return newFilm;
@@ -75,6 +113,7 @@ public class FilmService {
         throw new NotFoundException("Фильм с id = " + newFilm.getId() + " не найден");
     }
 
+    /*
     // Поставить лайк
     public void putLike(int filmId, int userId) {
         if (!userService.isPresent(userId)) {
@@ -132,4 +171,5 @@ public class FilmService {
     public void clear() {
         filmStorage.clear();
     }
+    */
 }
