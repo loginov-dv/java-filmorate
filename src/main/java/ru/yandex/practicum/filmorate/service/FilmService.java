@@ -14,12 +14,11 @@ import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // Сервис по работе с фильмами
 @Service
@@ -45,13 +44,15 @@ public class FilmService {
     }
 
     // Вернуть все фильмы
-    public List<Film> getAll() {
+    public List<FilmDto> getAll() {
         List<Film> films = filmRepository.getAll();
         for (Film film : films) {
             getMpaAndGenres(film);
         }
 
-        return films;
+        return films.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 
     // Вернуть фильм по id
