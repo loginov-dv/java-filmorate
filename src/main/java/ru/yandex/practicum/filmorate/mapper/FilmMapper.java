@@ -5,9 +5,14 @@ import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.model.Film;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 // Маппер для класса Film
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class FilmMapper {
+public final class FilmMapper {
     // Преобразовать Film в FilmDto
     public static FilmDto mapToFilmDto(Film film) {
         FilmDto dto = new FilmDto();
@@ -16,6 +21,17 @@ public class FilmMapper {
         dto.setDescription(film.getDescription());
         dto.setReleaseDate(film.getReleaseDate());
         dto.setDuration(film.getDuration());
+
+        MpaIdDto mpaIdDto = new MpaIdDto();
+        mpaIdDto.setId(film.getRating().getId());
+        dto.setMpa(mpaIdDto);
+
+        if (film.getGenres() != null) {
+            Set<GenreIdDto> genres = film.getGenres().stream()
+                    .map(GenreMapper::mapToGenreIdDto)
+                    .collect(Collectors.toSet());
+            dto.setGenres(genres);
+        }
 
         return dto;
     }
