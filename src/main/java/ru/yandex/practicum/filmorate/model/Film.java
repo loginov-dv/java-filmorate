@@ -12,7 +12,7 @@ import java.util.Set;
 // Модель данных для описания фильма
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"id", "description", "likes"})
+@EqualsAndHashCode(exclude = {"id", "description"/*, "likes"*/})
 @ToString
 public class Film {
     // Идентификатор
@@ -30,6 +30,12 @@ public class Film {
     // Продолжительность
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
+    // MPA-рейтинг
+    private MpaRating rating;
+    // Жанры
+    private Set<Genre> genres;
+
+    /*
     // Лайки пользователей
     @Setter(AccessLevel.NONE)
     private Set<Integer> likes = new HashSet<>();
@@ -60,4 +66,5 @@ public class Film {
 
         likes.clear();
     }
+    */
 }
