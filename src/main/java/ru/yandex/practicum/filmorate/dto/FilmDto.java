@@ -8,6 +8,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.List;
 
 // Film data transfer object
 @Data
@@ -23,4 +24,7 @@ public class FilmDto {
     private LocalDate releaseDate;
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
+
+    private MpaIdDto mpa;
+    private List<GenreIdDto> genres;
 }
