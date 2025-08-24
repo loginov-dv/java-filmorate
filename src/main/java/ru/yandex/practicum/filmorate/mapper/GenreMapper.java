@@ -5,11 +5,6 @@ import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.GenreIdDto;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 // Маппер для класса Genre
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class GenreMapper {
@@ -20,16 +15,5 @@ public final class GenreMapper {
         genreIdDto.setId(genre.getId());
 
         return genreIdDto;
-    }
-
-    // Преобразовать коллекцию Genre в коллекцию GenreIdDto
-    public static List<GenreIdDto> mapToListOfGenreIdDto(Set<Genre> genres) {
-        if (genres == null || genres.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return genres.stream()
-                .map(GenreMapper::mapToGenreIdDto)
-                .collect(Collectors.toList());
     }
 }
