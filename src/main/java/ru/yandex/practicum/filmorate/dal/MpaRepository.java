@@ -30,12 +30,12 @@ public class MpaRepository extends BaseRepository<MpaRating> {
     }
 
     public List<MpaRating> getAll() {
-        logger.debug("Запрос на получение всех жанров");
+        logger.debug("Запрос на получение всех рейтингов");
         return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<MpaRating> getById(int mpaId) {
-        logger.debug("Запрос на получение жанра с id = {}", mpaId);
+        logger.debug("Запрос на получение рейтинга с id = {}", mpaId);
         return findOne(FIND_BY_ID_QUERY, mpaId);
     }
 
@@ -43,14 +43,14 @@ public class MpaRepository extends BaseRepository<MpaRating> {
         int id = insert(INSERT_QUERY, mpa.getName());
         mpa.setId(id);
 
-        logger.debug("Запрос на добавление жанра: id = {}, name = {}", mpa.getId(), mpa.getName());
+        logger.debug("Запрос на добавление рейтинга: id = {}, name = {}", mpa.getId(), mpa.getName());
         return mpa;
     }
 
     public MpaRating update(MpaRating mpa) {
         update(UPDATE_QUERY, mpa.getName());
 
-        logger.debug("Запрос на обновление жанра: id = {}, name = {}", mpa.getId(), mpa.getName());
+        logger.debug("Запрос на обновление рейтинга: id = {}, name = {}", mpa.getId(), mpa.getName());
         return mpa;
     }
 }
