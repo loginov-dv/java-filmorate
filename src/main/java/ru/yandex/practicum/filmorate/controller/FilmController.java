@@ -5,10 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.Collection;
+import java.util.List;
 
 // Контроллер для работы с фильмами
 @RestController
@@ -24,13 +26,13 @@ public class FilmController {
 
     // Эндпоинт GET /films
     @GetMapping
-    public Collection<Film> getAll() {
+    public List<FilmDto> getAll() {
         return filmService.getAll();
     }
 
     // Эндпоинт GET /films/{id}
     @GetMapping("/{id}")
-    public Film getById(@PathVariable int id) {
+    public FilmDto getById(@PathVariable int id) {
         return filmService.getById(id);
     }
 
@@ -47,6 +49,7 @@ public class FilmController {
         return filmService.update(newFilm);
     }
 
+    /*
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
     public void putLike(@PathVariable int id,
@@ -78,4 +81,5 @@ public class FilmController {
     public void clear() {
         filmService.clear();
     }
+    */
 }
