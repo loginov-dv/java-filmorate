@@ -22,8 +22,6 @@ public class GenreRepository extends BaseRepository<Genre> {
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES + " WHERE id = ?";
     private static final String FIND_BY_FILM_ID_QUERY = "SELECT g.genre_id, g.name FROM " + TABLE_NAME_GENRES + " AS g " +
             "JOIN " + TABLE_NAME_FILM_GENRES + " AS fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
-    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME_GENRES + "(name) VALUES (?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME_GENRES + " SET name = ? WHERE id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(GenreRepository.class);
 
@@ -45,21 +43,5 @@ public class GenreRepository extends BaseRepository<Genre> {
     public List<Genre> getByFilmId(int filmId) {
         logger.debug("Запрос на получение жанров фильма с id = {}", filmId);
         return findMany(FIND_BY_FILM_ID_QUERY, filmId);
-    }
-
-    // TODO: удалить
-    public Genre create(Genre genre) {
-        int id = insert(INSERT_QUERY, genre.getName());
-        genre.setId(id);
-
-        logger.debug("Запрос на добавление жанра: id = {}, name = {}", genre.getId(), genre.getName());
-        return genre;
-    }
-
-    public Genre update(Genre genre) {
-        update(UPDATE_QUERY, genre.getName());
-
-        logger.debug("Запрос на обновление жанра: id = {}, name = {}", genre.getId(), genre.getName());
-        return genre;
     }
 }
