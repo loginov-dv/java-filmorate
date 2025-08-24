@@ -14,13 +14,16 @@ import java.util.Optional;
 // Класс-репозиторий для работы с таблицей "genres"
 @Repository
 public class GenreRepository extends BaseRepository<Genre> {
-    // Наименование
-    private static final String TABLE_NAME = "genres";
+    // Наименование таблиц
+    private static final String TABLE_NAME_GENRES = "genres";
+    private static final String TABLE_NAME_FILM_GENRES = "film_genres";
     // Запросы
-    private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
-    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME + "(name) VALUES (?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " SET name = ? WHERE id = ?";
+    private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES;
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES + " WHERE id = ?";
+    private static final String FIND_BY_FILM_ID_QUERY = "SELECT g.genre_id, g.name FROM " + TABLE_NAME_GENRES + " AS g " +
+            "JOIN " + TABLE_NAME_FILM_GENRES + " AS fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
+    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME_GENRES + "(name) VALUES (?)";
+    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME_GENRES + " SET name = ? WHERE id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(GenreRepository.class);
 
@@ -34,11 +37,17 @@ public class GenreRepository extends BaseRepository<Genre> {
         return findMany(FIND_ALL_QUERY);
     }
 
-    public Optional<Genre> getById(int mpaId) {
-        logger.debug("Запрос на получение жанра с id = {}", mpaId);
-        return findOne(FIND_BY_ID_QUERY, mpaId);
+    public Optional<Genre> getById(int genreId) {
+        logger.debug("Запрос на получение жанра с id = {}", genreId);
+        return findOne(FIND_BY_ID_QUERY, genreId);
     }
 
+    public List<Genre> getByFilmId(int filmId) {
+        logger.debug("Запрос на получение жанров фильма с id = {}", filmId);
+        return findMany(FIND_BY_FILM_ID_QUERY, filmId);
+    }
+
+    // TODO: удалить
     public Genre create(Genre genre) {
         int id = insert(INSERT_QUERY, genre.getName());
         genre.setId(id);
