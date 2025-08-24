@@ -7,8 +7,10 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 // Класс, содержащий данные, необходимые для создания нового фильма
+// TODO: validation annotations
 @Data
 public class NewFilmRequest {
     @NotBlank(message = "Название не может быть пустым")
@@ -20,4 +22,7 @@ public class NewFilmRequest {
     private LocalDate releaseDate;
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
+
+    private MpaIdDto mpa;
+    private Set<GenreIdDto> genres;
 }
