@@ -4,9 +4,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.MpaRating;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -37,12 +37,15 @@ public final class FilmMapper {
     }
 
     // Преобразовать NewFilmRequest в Film
-    public static Film mapToFilm(NewFilmRequest request) {
+    public static Film mapToFilm(NewFilmRequest request, MpaRating mpaRating, Set<Genre> genres) {
         Film film = new Film();
         film.setName(request.getName());
         film.setDescription(request.getDescription());
         film.setReleaseDate(request.getReleaseDate());
         film.setDuration(request.getDuration());
+
+        film.setRating(mpaRating);
+        film.setGenres(genres);
 
         return film;
     }
