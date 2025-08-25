@@ -51,7 +51,7 @@ public class FilmController {
         return filmService.update(id, request);
     }
 
-    /*
+
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
     public void putLike(@PathVariable int id,
@@ -68,10 +68,11 @@ public class FilmController {
 
     // Эндпоинт GET /films/popular/count?=count
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count) {
         return filmService.getPopular(count);
     }
 
+    /*
     // Вспомогательный эндпоинт DELETE /films/likes/clear (для удаления всех лайков и изоляции тестов)
     @DeleteMapping("/likes/clear")
     public void clearLikes() {
