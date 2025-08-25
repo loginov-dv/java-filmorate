@@ -7,12 +7,11 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
-import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.Collection;
 import java.util.List;
 
+// TODO: check update validation
 // Контроллер для работы с пользователями
 @RestController
 @RequestMapping("/users")
@@ -46,15 +45,9 @@ public class UserController {
 
     // Эндпоинт PUT /users
     @PutMapping("/{id}")
-    public UserDto update(@PathVariable int id, @Valid @RequestBody UpdateUserRequest request) {
+    public UserDto update(@PathVariable int id,
+                          @Valid @RequestBody UpdateUserRequest request) {
         return userService.update(id, request);
-    }
-
-    /*
-    // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
-    @DeleteMapping("/clear")
-    public void clearAllUsers() {
-        userService.clearAllUsers();
     }
 
     // Эндпоинт PUT /users/{id}/friends/{friendId}
@@ -73,15 +66,22 @@ public class UserController {
 
     // Эндпоинт GET /users/{id}/friends
     @GetMapping("/{id}/friends")
-    public Collection<User> getFriends(@PathVariable int id) {
+    public List<UserDto> getFriends(@PathVariable int id) {
         return userService.getFriends(id);
     }
 
     // Эндпоинт GET /users/{id}/friends/common/{otherId}
     @GetMapping("/{id}/friends/common/{otherId}")
-    public Collection<User> getCommonFriends(@PathVariable int id,
-                                             @PathVariable int otherId) {
+    public List<UserDto> getCommonFriends(@PathVariable int id,
+                                          @PathVariable int otherId) {
         return userService.getCommonFriends(id, otherId);
+    }
+
+    /*
+    // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
+    @DeleteMapping("/clear")
+    public void clearAllUsers() {
+        userService.clearAllUsers();
     }
 
     // Вспомогательный эндпоинт DELETE /users/friends/clear для удаления всех дружеских связей
