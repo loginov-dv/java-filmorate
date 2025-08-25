@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.GenreRepository;
 import ru.yandex.practicum.filmorate.dal.MpaRepository;
+import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.GenreIdDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
@@ -14,7 +15,6 @@ import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
-import ru.yandex.practicum.filmorate.mapper.GenreMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -32,20 +32,20 @@ public class FilmService {
     private final FilmRepository filmRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmService.class);
-    // Сервис по работе с пользователями
-    private final UserService userService;
     // Репозиторий рейтингов
     private final MpaRepository mpaRepository;
     // Репозиторий жанров
     private final GenreRepository genreRepository;
+    // Сервис по работе с пользователями
+    private final UserRepository userRepository;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserService userService) {
+                       MpaRepository mpaRepository, UserRepository userRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     // Вернуть все фильмы
@@ -142,50 +142,53 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
-    /*
+
     // Поставить лайк
     public void putLike(int filmId, int userId) {
-        if (!userService.isPresent(userId)) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
-        }
-        if (!isPresent(filmId)) {
+        if (filmRepository.getById(filmId).isEmpty()) {
             logger.warn("Фильм с id = {} не найден", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден");
         }
 
-        filmStorage.putLike(filmId, userId);
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        filmRepository.putLike(filmId, userId);
         logger.info("Пользователь с id = {} поставил лайк фильму с id = {}", userId, filmId);
     }
 
     // Удалить лайк
     public void removeLike(int filmId, int userId) {
-        if (!userService.isPresent(userId)) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
-        }
-        if (!isPresent(filmId)) {
+        if (filmRepository.getById(filmId).isEmpty()) {
             logger.warn("Фильм с id = {} не найден", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден");
         }
 
-        filmStorage.removeLike(filmId, userId);
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        filmRepository.removeLike(filmId, userId);
         logger.info("Пользователь с id = {} убрал лайк у фильма с id = {}", userId, filmId);
     }
 
     // Полуить список из первых count фильмов по количеству лайков
-    public Collection<Film> getPopular(int count) {
+    public List<FilmDto> getPopular(int count) {
         if (count <= 0) {
             logger.warn("Количество фильмов должно быть положительным числом");
             throw new ValidationException("Количество фильмов должно быть положительным числом");
         }
 
-        return filmStorage.getAll().stream()
-                .sorted(Comparator.comparingInt((Film film) -> film.getLikes().size()).reversed())
-                .limit(count)
+        return filmRepository.getPopular(count).stream()
+                .map(this::getMpaAndGenres)
+                .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
 
+    /*
     // Убрать лайки у всех фильмов
     public void clearLikes() {
         filmStorage.clearLikes();
