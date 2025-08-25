@@ -4,6 +4,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 // TODO: check validation
 // Класс, содержащий данные для обновления фильма
