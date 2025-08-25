@@ -44,10 +44,9 @@ public class UserController {
     }
 
     // Эндпоинт PUT /users
-    @PutMapping("/{id}")
-    public UserDto update(@PathVariable int id,
-                          @Valid @RequestBody UpdateUserRequest request) {
-        return userService.update(id, request);
+    @PutMapping
+    public UserDto update(@Valid @RequestBody UpdateUserRequest request) {
+        return userService.update(request);
     }
 
     // Эндпоинт PUT /users/{id}/friends/{friendId}
