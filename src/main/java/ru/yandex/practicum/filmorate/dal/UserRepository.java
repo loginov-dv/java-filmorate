@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,7 +15,9 @@ import java.util.Optional;
 // TODO: logs
 @Repository
 public class UserRepository extends BaseRepository<User> {
+    // Наименование таблицы
     private static final String TABLE_NAME = "users";
+    // Запросы
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
     private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
     private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE email = ?";
@@ -25,7 +26,13 @@ public class UserRepository extends BaseRepository<User> {
             "VALUES (?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
             "SET email = ?, login = ?, name = ?, birthday = ? WHERE id = ?";
-
+    private static final String FIND_FRIENDS_QUERY = "SELECT u.user_id, u.email, u.login, u.name, u.birthday " +
+            "FROM friendships AS f JOIN " + TABLE_NAME + " AS u ON f.friend_id = u.user_id " +
+            "WHERE f.user_id = ?";
+    private static final String INSERT_INTO_FRIENDSHIPS_QUERY = "INSERT INTO friendships(user_id, friend_id, status) " +
+            "VALUES(?, ?, true)";
+    private static final String DELETE_FROM_FRIENDSHIPS_QUERY = "DELETE FROM friendships " +
+            "WHERE user_id = ? AND friend_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
@@ -71,5 +78,17 @@ public class UserRepository extends BaseRepository<User> {
         );
 
         return user;
+    }
+
+    public void addFriend(int userId, int friendId) {
+        insert(INSERT_INTO_FRIENDSHIPS_QUERY, userId, friendId);
+    }
+
+    public void removeFriend(int userId, int friendId) {
+        update(DELETE_FROM_FRIENDSHIPS_QUERY, userId, friendId);
+    }
+
+    public List<User> getFriends(int userId) {
+        return findMany(FIND_FRIENDS_QUERY, userId);
     }
 }
