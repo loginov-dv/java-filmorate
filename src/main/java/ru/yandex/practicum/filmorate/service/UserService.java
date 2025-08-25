@@ -12,14 +12,9 @@ import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.FriendshipStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
-import ru.yandex.practicum.filmorate.util.StringUtils;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 // Сервис по работе с пользователями
@@ -28,16 +23,12 @@ import java.util.stream.Collectors;
 public class UserService {
     // Репозиторий пользователей
     private final UserRepository userRepository;
-
-    // Хранилище дружеских связей пользователей
-    //private final FriendshipStorage friendshipStorage;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
-    public UserService(UserRepository userRepository/*, FriendshipStorage friendshipStorage*/) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        //this.friendshipStorage = friendshipStorage;
     }
 
     // Вернуть всех пользователей
@@ -61,6 +52,7 @@ public class UserService {
 
     // Создать нового пользователя
     public UserDto create(NewUserRequest request) {
+        // TODO: name = login if null
         if (userRepository.getByEmail(request.getEmail()).isPresent()) {
             logger.warn("Этот email уже используется");
             throw new ValidationException("Этот email уже используется");
@@ -95,6 +87,91 @@ public class UserService {
         return UserMapper.mapToUserDto(updatedUser);
     }
 
+    // Добавить дружескую связь между пользователями
+    public void addFriend(int userId, int friendId) {
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+        if (userRepository.getById(friendId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+        if (userId == friendId) {
+            logger.warn("Нельзя добавить пользователя в друзья к самому себе");
+            throw new ValidationException("Нельзя добавить пользователя в друзья к самому себе");
+        }
+
+        if (getFriends(userId).stream().anyMatch(friend -> friend.getId() == friendId)) {
+            logger.warn("Пользователи с id = {} и id = {} уже являются друзьями", userId, friendId);
+            throw new ValidationException("Пользователи с id = " + userId + " и id = " + friendId +
+                    " уже являются друзьями");
+        }
+
+        logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
+        userRepository.addFriend(userId, friendId);
+    }
+
+    // Удалить дружескую связь между пользователями
+    public void removeFriend(int userId, int friendId) {
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+        if (userRepository.getById(friendId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
+        userRepository.removeFriend(userId, friendId);
+    }
+
+    // Получить всех друзей пользователя с указанными id
+    public List<UserDto> getFriends(int userId) {
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        List<User> friends = userRepository.getFriends(userId);
+
+        logger.info("Друзья пользователя с id = {}: {}", userId,
+                friends.stream()
+                        .map(User::getId)
+                        .collect(Collectors.toList()));
+        return friends.stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
+    }
+
+    // Получить всех общий друзей двух пользователей
+    public List<UserDto> getCommonFriends(int firstUserId, int secondUserId) {
+        if (userRepository.getById(firstUserId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", firstUserId);
+            throw new NotFoundException("Пользователь с id = " + firstUserId + " не найден");
+        }
+        if (userRepository.getById(secondUserId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", secondUserId);
+            throw new NotFoundException("Пользователь с id = " + secondUserId + " не найден");
+        }
+
+        List<User> firstUserFriends = userRepository.getFriends(firstUserId);
+        List<User> secondUserFriends = userRepository.getFriends(secondUserId);
+
+        List<User> commonFriends = firstUserFriends.stream()
+                        .filter(secondUserFriends::contains)
+                        .collect(Collectors.toList());
+
+        logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId,
+                commonFriends.stream()
+                        .map(User::getId)
+                        .collect(Collectors.toList()));
+        return commonFriends.stream()
+                .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
+    }
+
     /*
     // Удалить всех пользователей
     public void clearAllUsers() {
@@ -104,79 +181,6 @@ public class UserService {
     // Вспомогательный метод для проверки наличия пользователя с указанным id
     public boolean isPresent(int id) {
         return userStorage.getById(id).isPresent();
-    }
-
-    // Добавить дружескую связь между пользователями
-    public void addFriend(int userId, int friendId) {
-        if (!isPresent(userId)) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
-        }
-        if (!isPresent(friendId)) {
-            logger.warn("Пользователь с id = {} не найден", friendId);
-            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
-        }
-        if (userId == friendId) {
-            logger.warn("Нельзя добавить пользователя в друзья к самому себе");
-            throw new ValidationException("Нельзя добавить пользователя в друзья к самому себе");
-        }
-        if (areFriends(userId, friendId)) {
-            logger.warn("Пользователи с id = {} и id = {} уже являются друзьями", userId, friendId);
-            throw new ValidationException("Пользователи с id = " + userId + " и id = " + friendId +
-                    " уже являются друзьями");
-        }
-
-        logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
-        friendshipStorage.addFriendship(userId, friendId);
-    }
-
-    // Удалить дружескую связь между пользователями
-    public void removeFriend(int userId, int friendId) {
-        if (!isPresent(userId)) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
-        }
-        if (!isPresent(friendId)) {
-            logger.warn("Пользователь с id = {} не найден", friendId);
-            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
-        }
-
-        logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
-        friendshipStorage.removeFriendship(userId, friendId);
-    }
-
-    // Получить всех друзей пользователя с указанными id
-    public Set<User> getFriends(int userId) {
-        if (!isPresent(userId)) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
-        }
-
-        Set<Integer> friendsId = friendshipStorage.getFriends(userId);
-
-        logger.info("Друзья пользователя с id = {}: {}", userId, friendsId);
-        return friendsId.stream()
-                .map(this::getById)
-                .collect(Collectors.toSet());
-    }
-
-    // Получить всех общий друзей двух пользователей
-    public Set<User> getCommonFriends(int firstUserId, int secondUserId) {
-        if (!isPresent(firstUserId)) {
-            logger.warn("Пользователь с id = {} не найден", firstUserId);
-            throw new NotFoundException("Пользователь с id = " + firstUserId + " не найден");
-        }
-        if (!isPresent(secondUserId)) {
-            logger.warn("Пользователь с id = {} не найден", secondUserId);
-            throw new NotFoundException("Пользователь с id = " + secondUserId + " не найден");
-        }
-
-        Set<Integer> commonFriendsId = friendshipStorage.getCommonFriends(firstUserId, secondUserId);
-
-        logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId, commonFriendsId);
-        return commonFriendsId.stream()
-                .map(this::getById)
-                .collect(Collectors.toSet());
     }
 
     // Проверяет, являются ли друзьями два пользователя с указанными id
