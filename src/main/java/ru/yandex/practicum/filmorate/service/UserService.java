@@ -67,12 +67,17 @@ public class UserService {
     }
 
     // Изменить пользователя
-    public UserDto update(int id, UpdateUserRequest request) {
-        Optional<User> maybeUser = userRepository.getById(id);
+    public UserDto update(UpdateUserRequest request) {
+        if (request.getId() == null) {
+            logger.warn("Не указан id");
+            throw new NotFoundException("Не указан id");
+        }
+
+        Optional<User> maybeUser = userRepository.getById(request.getId());
 
         if (maybeUser.isEmpty()) {
-            logger.warn("Пользователь с id = {} не найден", id);
-            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+            logger.warn("Пользователь с id = {} не найден", request.getId());
+            throw new NotFoundException("Пользователь с id = " + request.getId() + " не найден");
         }
 
         if (!maybeUser.get().getEmail().equals(request.getEmail())
