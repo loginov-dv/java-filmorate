@@ -27,6 +27,13 @@ public class FilmRepository extends BaseRepository<Film> {
             "VALUES(?, ?)";
     private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
             "SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+    private static final String INSERT_FILM_LIKES_QUERY = "INSERT INTO film_likes(film_id, genre_id) " +
+            "VALUES(?, ?)";
+    private static final String DELETE_FROM_FILM_LIKES_QUERY = "DELETE FROM film_likes " +
+            "WHERE film_id = ? AND user_id = ?";
+    private static final String GET_POPULAR_QUERY = "SELECT f.name, f.description, f.release_date, f.duration, " +
+            "f.rating_id FROM " + TABLE_NAME + " AS f JOIN film_likes AS fl ON f.film_id = fl.film_id " +
+            "GROUP BY f.film_id ORDER BY COUNT(fl.user_id) DESC LIMIT ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
 
@@ -76,7 +83,21 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getId());
 
         logger.debug("Обновлен фильм с id = {}", film.getId());
-
         return film;
+    }
+
+    public void putLike(int filmId, int userId) {
+        insert(INSERT_FILM_LIKES_QUERY, filmId, userId);
+        logger.debug("Добавлена запись в film_likes: film_id = {}, user_id = {}", filmId, userId);
+    }
+
+    public void removeLike(int filmId, int userId) {
+        update(DELETE_FROM_FILM_LIKES_QUERY, filmId, userId);
+        logger.debug("Удалена запись из film_likes: film_id = {}, user_id = {}", filmId, userId);
+    }
+
+    public List<Film> getPopular(int count) {
+        logger.debug("Запрос на получение первых {} популярных фильмов", count);
+        return findMany(GET_POPULAR_QUERY, count);
     }
 }
