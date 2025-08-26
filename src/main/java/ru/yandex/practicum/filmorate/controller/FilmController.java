@@ -46,9 +46,9 @@ public class FilmController {
 
     // Эндпоинт PUT /films
     // TODO: valid?
-    @PutMapping("/{id}")
-    public FilmDto update(@PathVariable int id, @Valid @RequestBody UpdateFilmRequest request) {
-        return filmService.update(id, request);
+    @PutMapping
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest request) {
+        return filmService.update(request);
     }
 
 
