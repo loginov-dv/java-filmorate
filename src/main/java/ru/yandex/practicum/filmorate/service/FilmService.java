@@ -100,21 +100,23 @@ public class FilmService {
             throw new NotFoundException("Рейтинг с id = " + request.getMpa().getId() + " не найден");
         }
 
+        MpaRating mpaRating = maybeRating.get();
+
         // TODO: null?
         // TODO: duplicates
         Set<Genre> genres = new HashSet<>();
-        for (GenreIdDto genreIdDto : request.getGenres()) {
-            Optional<Genre> maybeGenre = genreRepository.getById(genreIdDto.getId());
+        if (request.getGenres() != null) {
+            for (GenreIdDto genreIdDto : request.getGenres()) {
+                Optional<Genre> maybeGenre = genreRepository.getById(genreIdDto.getId());
 
-            if (maybeGenre.isEmpty()) {
-                logger.warn("Жанр с id = {} не найден", genreIdDto.getId());
-                throw new NotFoundException("Жанр с id = " + genreIdDto.getId() + " не найден");
+                if (maybeGenre.isEmpty()) {
+                    logger.warn("Жанр с id = {} не найден", genreIdDto.getId());
+                    throw new NotFoundException("Жанр с id = " + genreIdDto.getId() + " не найден");
+                }
+
+                genres.add(maybeGenre.get());
             }
-
-            genres.add(maybeGenre.get());
         }
-
-        MpaRating mpaRating = maybeRating.get();
 
         Film film = FilmMapper.mapToFilm(request, mpaRating, genres);
 
@@ -134,10 +136,12 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + request.getId() + " не найден");
         }
 
+        logger.debug("Исходное состояние: {}", maybeFilm.get());
         Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request);
         updatedFilm = filmRepository.update(updatedFilm);
 
         logger.info("Изменён фильм с id = {}", updatedFilm.getId());
+        logger.debug("Новое состояние: {}", updatedFilm);
 
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
