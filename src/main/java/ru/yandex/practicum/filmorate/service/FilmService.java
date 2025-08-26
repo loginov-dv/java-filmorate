@@ -119,19 +119,19 @@ public class FilmService {
         Film film = FilmMapper.mapToFilm(request, mpaRating, genres);
 
         filmRepository.create(film);
-        logger.info("Создан фильм: id = {}, name = {}", film.getId(), film.getName());
+        logger.info("Создан фильм: {}", film);
 
         return FilmMapper.mapToFilmDto(film);
     }
 
     // Изменить фильм
-    public FilmDto update(int id, UpdateFilmRequest request) {
+    public FilmDto update(UpdateFilmRequest request) {
         // TODO: mpa & genres?
-        Optional<Film> maybeFilm = filmRepository.getById(id);
+        Optional<Film> maybeFilm = filmRepository.getById(request.getId());
 
         if (maybeFilm.isEmpty()) {
-            logger.warn("Фильм с id = {} не найден", id);
-            throw new NotFoundException("Фильм с id = " + id + " не найден");
+            logger.warn("Фильм с id = {} не найден", request.getId());
+            throw new NotFoundException("Фильм с id = " + request.getId() + " не найден");
         }
 
         Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request);
