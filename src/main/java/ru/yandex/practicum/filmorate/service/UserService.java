@@ -61,8 +61,7 @@ public class UserService {
         User user = UserMapper.mapToUser(request);
         user = userRepository.create(user);
 
-        logger.info("Создан пользователь: id = {}, login = {}", user.getId(), user.getLogin());
-
+        logger.info("Создан пользователь: {}}", user);
         return UserMapper.mapToUserDto(user);
     }
 
