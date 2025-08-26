@@ -36,7 +36,7 @@ public class FilmService {
     private final MpaRepository mpaRepository;
     // Репозиторий жанров
     private final GenreRepository genreRepository;
-    // Сервис по работе с пользователями
+    // Репозиторий пользователей
     private final UserRepository userRepository;
 
     @Autowired
@@ -50,10 +50,11 @@ public class FilmService {
 
     // Вернуть все фильмы
     public List<FilmDto> getAll() {
-        List<Film> films = filmRepository.getAll();
-        for (Film film : films) {
-            getMpaAndGenres(film);
-        }
+        logger.debug("Запрос на получение всех фильмов");
+
+        List<Film> films = filmRepository.getAll().stream()
+                .map(this::getMpaAndGenres)
+                .collect(Collectors.toList());
 
         return films.stream()
                 .map(FilmMapper::mapToFilmDto)
@@ -62,6 +63,8 @@ public class FilmService {
 
     // Вернуть фильм по id
     public FilmDto getById(int id) {
+        logger.debug("Запрос на получение фильма с id = {}", id);
+
         Optional<Film> maybeFilm = filmRepository.getById(id);
 
         if (maybeFilm.isEmpty()) {
@@ -74,10 +77,10 @@ public class FilmService {
         return FilmMapper.mapToFilmDto(film);
     }
 
+    // Добавить рейтинг и жанры
     private Film getMpaAndGenres(Film film) {
         Optional<MpaRating> maybeRating = mpaRepository.getById(film.getRating().getId());
 
-        // TODO: logs
         if (maybeRating.isEmpty()) {
             logger.warn("Рейтинг с id = {} не найден", film.getRating().getId());
             throw new NotFoundException("Рейтинг с id = " + film.getRating().getId() + " не найден");
@@ -93,6 +96,9 @@ public class FilmService {
 
     // Создать новый фильм
     public FilmDto create(NewFilmRequest request) {
+        logger.debug("Запрос на создания нового фильма");
+        logger.debug("Входные данные: {}", request);
+
         Optional<MpaRating> maybeRating = mpaRepository.getById(request.getMpa().getId());
 
         if (maybeRating.isEmpty()) {
@@ -102,8 +108,6 @@ public class FilmService {
 
         MpaRating mpaRating = maybeRating.get();
 
-        // TODO: null?
-        // TODO: duplicates
         Set<Genre> genres = new HashSet<>();
         if (request.getGenres() != null) {
             for (GenreIdDto genreIdDto : request.getGenres()) {
@@ -119,15 +123,17 @@ public class FilmService {
         }
 
         Film film = FilmMapper.mapToFilm(request, mpaRating, genres);
-
         filmRepository.create(film);
-        logger.info("Создан фильм: {}", film);
 
+        logger.info("Создан фильм: {}", film);
         return FilmMapper.mapToFilmDto(film);
     }
 
     // Изменить фильм
     public FilmDto update(UpdateFilmRequest request) {
+        logger.debug("Запрос на изменение фильма с id = {}", request.getId());
+        logger.debug("Входные данные: {}", request);
+
         // TODO: mpa & genres?
         Optional<Film> maybeFilm = filmRepository.getById(request.getId());
 
@@ -140,15 +146,16 @@ public class FilmService {
         Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request);
         updatedFilm = filmRepository.update(updatedFilm);
 
-        logger.info("Изменён фильм с id = {}", updatedFilm.getId());
-        logger.debug("Новое состояние: {}", updatedFilm);
-
+        logger.info("Изменён фильм: {}", updatedFilm);
         return FilmMapper.mapToFilmDto(updatedFilm);
     }
 
 
     // Поставить лайк
     public void putLike(int filmId, int userId) {
+        logger.debug("Запрос на добавление лайка фильма с id = {} от пользователя с id = {}",
+                filmId, userId);
+
         if (filmRepository.getById(filmId).isEmpty()) {
             logger.warn("Фильм с id = {} не найден", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден");
@@ -165,6 +172,9 @@ public class FilmService {
 
     // Удалить лайк
     public void removeLike(int filmId, int userId) {
+        logger.debug("Запрос на удаление лайка фильма с id = {} от пользователя с id = {}",
+                filmId, userId);
+
         if (filmRepository.getById(filmId).isEmpty()) {
             logger.warn("Фильм с id = {} не найден", filmId);
             throw new NotFoundException("Фильм с id = " + filmId + " не найден");
@@ -181,12 +191,19 @@ public class FilmService {
 
     // Полуить список из первых count фильмов по количеству лайков
     public List<FilmDto> getPopular(int count) {
+        logger.debug("Запрос на получение первых {} популярных фильмов", count);
+
         if (count <= 0) {
             logger.warn("Количество фильмов должно быть положительным числом");
             throw new ValidationException("Количество фильмов должно быть положительным числом");
         }
 
-        return filmRepository.getPopular(count).stream()
+        List<Film> popular = filmRepository.getPopular(count);
+
+        logger.info("Популярные фильмы: {}", popular.stream()
+                .map(Film::getId)
+                .collect(Collectors.toList()));
+        return popular.stream()
                 .map(this::getMpaAndGenres)
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());

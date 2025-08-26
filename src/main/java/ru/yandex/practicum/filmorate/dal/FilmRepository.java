@@ -43,16 +43,17 @@ public class FilmRepository extends BaseRepository<Film> {
     }
 
     public List<Film> getAll() {
-        logger.debug("Запрос на получение всех фильмов");
+        logger.debug("Запрос на получение всех строк таблицы films");
         return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<Film> getById(int filmId) {
-        logger.debug("Запрос на получение фильма с id = {}", filmId);
+        logger.debug("Запрос на получение строки таблицы films с id = {}", filmId);
         return findOne(FIND_BY_ID_QUERY, filmId);
     }
 
     public Film create(Film film) {
+        logger.debug("Запрос на вставку в таблицу films");
         int id = insert(INSERT_FILM_QUERY,
                 film.getName(),
                 film.getDescription(),
@@ -60,19 +61,21 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getDuration(),
                 film.getRating().getId()
         );
+        logger.debug("Получен новый id = {}", id);
         film.setId(id);
-
-        logger.debug("Добавлен новый фильм: {}", film);
 
         for (Genre genre : film.getGenres()) {
             insert(INSERT_FILM_GENRE_QUERY, film.getId(), genre.getId());
-            logger.debug("Добавлен жанр с id = {} для фильма с id = {}", genre.getId(), film.getId());
+            logger.debug("Добавлена строка в таблицу film_genres: film_id = {}, genre_id = {}",
+                    genre.getId(), film.getId());
         }
 
+        logger.debug("Добавлена строка в таблицу films с id = {}", id);
         return film;
     }
 
     public Film update(Film film) {
+        logger.debug("Запрос на обновление строки в таблице films с id = {}", film.getId());
         update(UPDATE_QUERY,
                 film.getName(),
                 film.getDescription(),
@@ -80,18 +83,20 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getDuration(),
                 film.getId());
 
-        logger.debug("Обновлен фильм с id = {}", film.getId());
+        logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
         return film;
     }
 
     public void putLike(int filmId, int userId) {
+        logger.debug("Запрос на вставку строки в таблицу film_likes");
         insert(INSERT_FILM_LIKES_QUERY, filmId, userId);
-        logger.debug("Добавлена запись в film_likes: film_id = {}, user_id = {}", filmId, userId);
+        logger.debug("Добавлена строка в таблицу film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
     public void removeLike(int filmId, int userId) {
+        logger.debug("Запрос на удаление строки из таблицы film_likes");
         update(DELETE_FROM_FILM_LIKES_QUERY, filmId, userId);
-        logger.debug("Удалена запись из film_likes: film_id = {}, user_id = {}", filmId, userId);
+        logger.debug("Удалена строка из таблицы film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
     public List<Film> getPopular(int count) {

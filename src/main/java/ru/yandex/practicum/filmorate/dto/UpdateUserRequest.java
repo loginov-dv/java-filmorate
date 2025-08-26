@@ -5,7 +5,6 @@ import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
 
-// TODO: check validation
 // Класс, содержащий данные для обновления пользователя
 @Data
 public class UpdateUserRequest {

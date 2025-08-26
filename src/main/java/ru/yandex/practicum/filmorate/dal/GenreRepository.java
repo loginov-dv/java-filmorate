@@ -30,12 +30,12 @@ public class GenreRepository extends BaseRepository<Genre> {
     }
 
     public List<Genre> getAll() {
-        logger.debug("Запрос на получение всех жанров");
+        logger.debug("Запрос на получение всех строк таблицы genres");
         return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<Genre> getById(int genreId) {
-        logger.debug("Запрос на получение жанра с id = {}", genreId);
+        logger.debug("Запрос на получение строки таблицы genres с id = {}", genreId);
         return findOne(FIND_BY_ID_QUERY, genreId);
     }
 

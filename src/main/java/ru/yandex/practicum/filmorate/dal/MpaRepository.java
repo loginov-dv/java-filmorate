@@ -28,12 +28,12 @@ public class MpaRepository extends BaseRepository<MpaRating> {
     }
 
     public List<MpaRating> getAll() {
-        logger.debug("Запрос на получение всех рейтингов");
+        logger.debug("Запрос на получение всех строк таблицы ratings");
         return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<MpaRating> getById(int mpaId) {
-        logger.debug("Запрос на получение рейтинга с id = {}", mpaId);
+        logger.debug("Запрос на получение строки таблицы ratings с id = {}", mpaId);
         return findOne(FIND_BY_ID_QUERY, mpaId);
     }
 }

@@ -41,22 +41,22 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public List<User> getAll() {
-        logger.debug("Запрос на получение всех пользователей");
+        logger.debug("Запрос на получение всех строк таблицы users");
         return findMany(FIND_ALL_QUERY);
     }
 
     public Optional<User> getById(int userId) {
-        logger.debug("Запрос на получение пользователя с id = {}", userId);
+        logger.debug("Запрос на получение строки таблицы users с id = {}", userId);
         return findOne(FIND_BY_ID_QUERY, userId);
     }
 
     public Optional<User> getByEmail(String email) {
-        logger.debug("Запрос на получение пользователя с email = {}", email);
+        logger.debug("Запрос на получение строки таблицы users с email = {}", email);
         return findOne(FIND_BY_EMAIL_QUERY, email);
     }
 
     public User create(User user) {
-        logger.debug("Запрос на создание пользователя");
+        logger.debug("Запрос на вставку в таблицу users");
         int id = insert(INSERT_QUERY,
                 user.getEmail(),
                 user.getLogin(),
@@ -66,14 +66,12 @@ public class UserRepository extends BaseRepository<User> {
         logger.debug("Получен новый id = {}", id);
         user.setId(id);
 
-        logger.debug("Добавлен новый пользователь: id = {}, email = {}, login = {}, name = {}, birthday = {}",
-                user.getId(), user.getEmail(), user.getLogin(), user.getName(), user.getBirthday());
-
+        logger.debug("Добавлена строка в таблицу users с id = {}", id);
         return user;
     }
 
     public User update(User user) {
-        logger.debug("Запрос на обновление пользователя с id = {}", user.getId());
+        logger.debug("Запрос на обновление строки в таблице films с id = {}", user.getId());
         update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
@@ -82,19 +80,20 @@ public class UserRepository extends BaseRepository<User> {
                 user.getId()
         );
 
+        logger.debug("Обновлена строка в таблице users с id = {}", user.getId());
         return user;
     }
 
     public void addFriend(int userId, int friendId) {
-        logger.debug("Запрос на добавление пользователя с id = {} в друзья к пользователю c id = {}",
-                userId, friendId);
+        logger.debug("Запрос на вставку строки в таблицу friendships");
         insert(INSERT_INTO_FRIENDSHIPS_QUERY, userId, friendId);
+        logger.debug("Добавлена строка в таблицу friendships: user_id = {}, friend_id = {}", userId, friendId);
     }
 
     public void removeFriend(int userId, int friendId) {
-        logger.debug("Запрос на удаление пользователя с id = {} из друзей пользователя c id = {}",
-                userId, friendId);
+        logger.debug("Запрос на удаление строки из таблицы friendships");
         update(DELETE_FROM_FRIENDSHIPS_QUERY, userId, friendId);
+        logger.debug("Удалена строка из таблицы friendships: user_id = {}, friend_id = {}", userId, friendId);
     }
 
     public List<User> getFriends(int userId) {

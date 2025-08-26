@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 // Сервис по работе с пользователями
-// TODO: logs
 @Service
 public class UserService {
     // Репозиторий пользователей
@@ -33,6 +32,8 @@ public class UserService {
 
     // Вернуть всех пользователей
     public List<UserDto> getAll() {
+        logger.debug("Запрос на получение всех пользователей");
+
         return userRepository.getAll().stream()
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
@@ -40,6 +41,8 @@ public class UserService {
 
     // Вернуть пользователя по id
     public UserDto getById(int id) {
+        logger.debug("Запрос на получение пользователя с id = {}", id);
+
         Optional<User> maybeUser = userRepository.getById(id);
 
         if (maybeUser.isEmpty()) {
@@ -52,21 +55,29 @@ public class UserService {
 
     // Создать нового пользователя
     public UserDto create(NewUserRequest request) {
-        // TODO: name = login if null
+        logger.debug("Запрос на создания нового пользователя");
+        logger.debug("Входные данные: {}", request);
+
         if (userRepository.getByEmail(request.getEmail()).isPresent()) {
             logger.warn("Этот email уже используется");
             throw new ValidationException("Этот email уже используется");
         }
 
         User user = UserMapper.mapToUser(request);
+        if (user.getName() == null) {
+            user.setName(user.getLogin());
+        }
         user = userRepository.create(user);
 
-        logger.info("Создан пользователь: {}}", user);
+        logger.info("Создан пользователь: {}", user);
         return UserMapper.mapToUserDto(user);
     }
 
     // Изменить пользователя
     public UserDto update(UpdateUserRequest request) {
+        logger.debug("Запрос на изменение пользователя с id = {}", request.getId());
+        logger.debug("Входные данные: {}", request);
+
         if (request.getId() == null) {
             logger.warn("Не указан id");
             throw new NotFoundException("Не указан id");
@@ -79,6 +90,8 @@ public class UserService {
             throw new NotFoundException("Пользователь с id = " + request.getId() + " не найден");
         }
 
+        logger.debug("Исходное состояние: {}", maybeUser.get());
+
         if (!maybeUser.get().getEmail().equals(request.getEmail())
                 && userRepository.getByEmail(request.getEmail()).isPresent()) {
             logger.warn("Этот email уже используется");
@@ -88,11 +101,15 @@ public class UserService {
         User updatedUser = UserMapper.updateUserFields(maybeUser.get(), request);
         updatedUser = userRepository.update(updatedUser);
 
+        logger.info("Изменен пользователь: {}", updatedUser);
         return UserMapper.mapToUserDto(updatedUser);
     }
 
     // Добавить дружескую связь между пользователями
     public void addFriend(int userId, int friendId) {
+        logger.debug("Запрос на добавление пользователя с id = {} в друзья пользователя с id = {}",
+                friendId, userId);
+
         if (userRepository.getById(userId).isEmpty()) {
             logger.warn("Пользователь с id = {} не найден", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
@@ -118,6 +135,9 @@ public class UserService {
 
     // Удалить дружескую связь между пользователями
     public void removeFriend(int userId, int friendId) {
+        logger.debug("Запрос на удаления пользователя с id = {} из друзей пользователя с id = {}",
+                friendId, userId);
+
         if (userRepository.getById(userId).isEmpty()) {
             logger.warn("Пользователь с id = {} не найден", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
@@ -133,6 +153,8 @@ public class UserService {
 
     // Получить всех друзей пользователя с указанными id
     public List<UserDto> getFriends(int userId) {
+        logger.debug("Запрос на получение всех друзей пользователя с id = {}", userId);
+
         if (userRepository.getById(userId).isEmpty()) {
             logger.warn("Пользователь с id = {} не найден", userId);
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
@@ -151,6 +173,9 @@ public class UserService {
 
     // Получить всех общий друзей двух пользователей
     public List<UserDto> getCommonFriends(int firstUserId, int secondUserId) {
+        logger.debug("Запрос на получение общих друзей пользователей с id = {} и id = {}",
+                firstUserId, secondUserId);
+
         if (userRepository.getById(firstUserId).isEmpty()) {
             logger.warn("Пользователь с id = {} не найден", firstUserId);
             throw new NotFoundException("Пользователь с id = " + firstUserId + " не найден");

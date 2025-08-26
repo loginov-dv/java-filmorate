@@ -36,16 +36,9 @@ public class BaseRepository<T> {
         return jdbcTemplate.query(query, rowMapper, params);
     }
 
-    protected boolean delete(String query) {
-        int rowsDeleted = jdbcTemplate.update(query);
-        return rowsDeleted > 0;
-    }
-
     protected void update(String query, Object... params) {
         int rowsUpdated = jdbcTemplate.update(query, params);
         if (rowsUpdated == 0) {
-            // TODO: exception
-            //throw new RuntimeException("Не удалось обновить данные");
             logger.warn("Не было обновлено ни одной строки");
         }
     }
@@ -66,7 +59,6 @@ public class BaseRepository<T> {
         if (id != null) {
             return id;
         } else {
-            // TODO: exception
             throw new RuntimeException("Не удалось сохранить данные");
         }
     }

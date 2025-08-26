@@ -10,7 +10,6 @@ import java.time.LocalDate;
 import java.util.Set;
 
 // Класс, содержащий данные, необходимые для создания нового фильма
-// TODO: validation annotations
 @Data
 public class NewFilmRequest {
     @NotBlank(message = "Название не может быть пустым")
