@@ -18,7 +18,7 @@ public class MpaRepository extends BaseRepository<MpaRating> {
     private static final String TABLE_NAME = "ratings";
     // Запросы
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE rating_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(MpaRepository.class);
 

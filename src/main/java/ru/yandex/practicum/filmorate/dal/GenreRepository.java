@@ -16,12 +16,11 @@ import java.util.Optional;
 public class GenreRepository extends BaseRepository<Genre> {
     // Наименование таблиц
     private static final String TABLE_NAME_GENRES = "genres";
-    private static final String TABLE_NAME_FILM_GENRES = "film_genres";
     // Запросы
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES + " WHERE id = ?";
-    private static final String FIND_BY_FILM_ID_QUERY = "SELECT g.genre_id, g.name FROM " + TABLE_NAME_GENRES + " AS g " +
-            "JOIN " + TABLE_NAME_FILM_GENRES + " AS fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME_GENRES + " WHERE genre_id = ?";
+    private static final String FIND_BY_FILM_ID_QUERY = "SELECT g.genre_id, g.name FROM genres AS g " +
+            "JOIN film_genres AS fg ON g.genre_id = fg.genre_id WHERE fg.film_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(GenreRepository.class);
 
