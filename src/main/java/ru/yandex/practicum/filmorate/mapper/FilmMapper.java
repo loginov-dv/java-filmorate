@@ -24,16 +24,22 @@ public final class FilmMapper {
         dto.setReleaseDate(film.getReleaseDate());
         dto.setDuration(film.getDuration());
 
-        MpaIdDto mpaIdDto = new MpaIdDto();
+        dto.setMpa(film.getRating());
+
+        /*MpaIdDto mpaIdDto = new MpaIdDto();
         mpaIdDto.setId(film.getRating().getId());
-        dto.setMpa(mpaIdDto);
+        dto.setMpa(mpaIdDto);*/
 
         if (film.getGenres() != null) {
-            Set<GenreIdDto> genres = film.getGenres().stream()
+            Set<Genre> genres = film.getGenres().stream()
+                    .sorted(Comparator.comparingInt(Genre::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            dto.setGenres(genres);
+            /*Set<GenreIdDto> genres = film.getGenres().stream()
                     .map(GenreMapper::mapToGenreIdDto)
                     .sorted(Comparator.comparingInt(GenreIdDto::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
-            dto.setGenres(genres);
+            dto.setGenres(genres);*/
         }
 
         return dto;
