@@ -6,7 +6,6 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Set;
 
 // Модель данных для описания фильма
@@ -34,37 +33,4 @@ public class Film {
     private MpaRating rating;
     // Жанры
     private Set<Genre> genres;
-
-    /*
-    // Лайки пользователей
-    @Setter(AccessLevel.NONE)
-    private Set<Integer> likes = new HashSet<>();
-
-    // Добавить лайк пользователя с указанным id
-    public void addLike(int id) {
-        if (likes == null) {
-            likes = new HashSet<>();
-        }
-
-        likes.add(id);
-    }
-
-    // Убрать лайк пользователя с указанным id
-    public void removeLike(int id) {
-        if (likes == null) {
-            return;
-        }
-
-        likes.remove(id);
-    }
-
-    // Убрать все лайки пользователей
-    public void removeAllLikes() {
-        if (likes == null) {
-            return;
-        }
-
-        likes.clear();
-    }
-    */
 }

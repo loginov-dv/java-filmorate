@@ -1,7 +1,5 @@
 package ru.yandex.practicum.filmorate.model;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.Builder;
 import lombok.Data;
 
 // Модель данных для описания рейтинга Ассоциации кинокомпаний
