@@ -4,12 +4,12 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 // TODO: check validation
 // Класс, содержащий данные для обновления фильма
 @Data
 public class UpdateFilmRequest {
+    private Integer id;
     private String name;
     // TODO: check size and null/empty
     private String description;
