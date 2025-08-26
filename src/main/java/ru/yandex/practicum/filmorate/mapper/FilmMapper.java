@@ -7,6 +7,8 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -29,7 +31,8 @@ public final class FilmMapper {
         if (film.getGenres() != null) {
             Set<GenreIdDto> genres = film.getGenres().stream()
                     .map(GenreMapper::mapToGenreIdDto)
-                    .collect(Collectors.toSet());
+                    .sorted(Comparator.comparingInt(GenreIdDto::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
             dto.setGenres(genres);
         }
 
