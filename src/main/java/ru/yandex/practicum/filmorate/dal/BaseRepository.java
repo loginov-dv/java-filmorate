@@ -1,6 +1,8 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -18,6 +20,8 @@ public class BaseRepository<T> {
     private final JdbcTemplate jdbcTemplate;
     // Маппер
     private final RowMapper<T> rowMapper;
+    // Логгер
+    private static final Logger logger = LoggerFactory.getLogger(BaseRepository.class);
 
     protected Optional<T> findOne(String query, Object... params) {
         try {
@@ -41,7 +45,8 @@ public class BaseRepository<T> {
         int rowsUpdated = jdbcTemplate.update(query, params);
         if (rowsUpdated == 0) {
             // TODO: exception
-            throw new RuntimeException("Не удалось обновить данные");
+            //throw new RuntimeException("Не удалось обновить данные");
+            logger.warn("Не было обновлено ни одной строки");
         }
     }
 
