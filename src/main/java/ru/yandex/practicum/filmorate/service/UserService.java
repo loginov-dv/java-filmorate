@@ -112,8 +112,8 @@ public class UserService {
                     " уже являются друзьями");
         }
 
-        logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
         userRepository.addFriend(userId, friendId);
+        logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
     }
 
     // Удалить дружескую связь между пользователями
@@ -127,8 +127,8 @@ public class UserService {
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
 
-        logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
         userRepository.removeFriend(userId, friendId);
+        logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
     }
 
     // Получить всех друзей пользователя с указанными id
