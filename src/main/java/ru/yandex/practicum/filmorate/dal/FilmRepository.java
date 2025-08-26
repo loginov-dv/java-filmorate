@@ -19,14 +19,14 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String TABLE_NAME = "films";
     // Запросы
     private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE id = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE film_id = ?";
     private static final String INSERT_FILM_QUERY = "INSERT INTO " + TABLE_NAME +
             "(name, description, release_date, duration, rating_id) " +
             "VALUES(?, ?, ?, ?, ?)";
     private static final String INSERT_FILM_GENRE_QUERY = "INSERT INTO film_genres(film_id, genre_id) " +
             "VALUES(?, ?)";
     private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
-            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE id = ?";
+            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE film_id = ?";
     private static final String INSERT_FILM_LIKES_QUERY = "INSERT INTO film_likes(film_id, genre_id) " +
             "VALUES(?, ?)";
     private static final String DELETE_FROM_FILM_LIKES_QUERY = "DELETE FROM film_likes " +
