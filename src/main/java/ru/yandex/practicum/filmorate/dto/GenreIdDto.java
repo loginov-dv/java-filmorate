@@ -6,6 +6,6 @@ import lombok.Data;
 // Dto для Genre
 @Data
 public class GenreIdDto {
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    //@JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private int id;
 }

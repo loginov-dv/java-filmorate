@@ -6,6 +6,6 @@ import lombok.Data;
 // Dto для MpaRating
 @Data
 public class MpaIdDto {
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    //@JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private int id;
 }
