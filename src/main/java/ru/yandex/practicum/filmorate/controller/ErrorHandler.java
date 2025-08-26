@@ -53,6 +53,6 @@ public class ErrorHandler {
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorMessage handleUnpredictedException(final Throwable ex) {
-        return new ErrorMessage("Произошла непредвиденная ошибка");
+        return new ErrorMessage("Произошла непредвиденная ошибка: " + ex.getMessage());
     }
 }
