@@ -1,8 +1,7 @@
 package ru.yandex.practicum.filmorate.dal;
 
 import lombok.RequiredArgsConstructor;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
@@ -24,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(scripts = { "/schema.sql", "/data.sql", "/test-data.sql" })
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = {UserRowMapper.class, UserRepository.class})
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class UserRepositoryTest {
     private final UserRepository userRepository;
 
@@ -40,6 +40,7 @@ class UserRepositoryTest {
     }
 
     @Test
+    @Order(1)
     void shouldFindAllUsers() {
         List<User> users = userRepository.getAll();
 
