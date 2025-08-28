@@ -26,7 +26,6 @@ public class FilmDto {
     private LocalDate releaseDate;
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
-
     private MpaRating mpa;
     private Set<Genre> genres;
 }
