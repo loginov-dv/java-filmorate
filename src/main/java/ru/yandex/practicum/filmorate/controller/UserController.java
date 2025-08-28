@@ -87,19 +87,4 @@ public class UserController {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
     }
-
-    /*
-    // Вспомогательный эндпоинт DELETE /users для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
-    @DeleteMapping("/clear")
-    public void clearAllUsers() {
-        userService.clearAllUsers();
-    }
-
-    // Вспомогательный эндпоинт DELETE /users/friends/clear для удаления всех дружеских связей
-    // (для обеспечения изоляции тестов)
-    @DeleteMapping("/friends/clear")
-    public void clearAllFriendships() {
-        userService.clearAllFriendships();
-    }
-    */
 }

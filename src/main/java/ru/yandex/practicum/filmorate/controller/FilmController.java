@@ -80,18 +80,4 @@ public class FilmController {
         logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
         return filmService.getPopular(count);
     }
-
-    /*
-    // Вспомогательный эндпоинт DELETE /films/likes/clear (для удаления всех лайков и изоляции тестов)
-    @DeleteMapping("/likes/clear")
-    public void clearLikes() {
-        filmService.clearLikes();
-    }
-
-    // Вспомогательный эндпоинт DELETE /films для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
-    @DeleteMapping("/clear")
-    public void clear() {
-        filmService.clear();
-    }
-    */
 }
