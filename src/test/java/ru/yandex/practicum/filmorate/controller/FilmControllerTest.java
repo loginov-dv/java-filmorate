@@ -218,6 +218,13 @@ class FilmControllerTest {
                 .andExpect(jsonPath("$.length()").value(5));
     }
 
+    @Test
+    void shouldGetFilmById() throws Exception {
+        mockMvc.perform(get(FILMS_URL + "/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
     // Проверяет обновление существующего фильма
     @Test
     void shouldUpdateFilm() throws Exception {
