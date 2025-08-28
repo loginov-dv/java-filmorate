@@ -200,26 +200,4 @@ public class UserService {
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
     }
-
-    /*
-    // Удалить всех пользователей
-    public void clearAllUsers() {
-        userStorage.clear();
-    }
-
-    // Вспомогательный метод для проверки наличия пользователя с указанным id
-    public boolean isPresent(int id) {
-        return userStorage.getById(id).isPresent();
-    }
-
-    // Проверяет, являются ли друзьями два пользователя с указанными id
-    public boolean areFriends(int firstUserId, int secondUserId) {
-        return friendshipStorage.areFriends(firstUserId, secondUserId);
-    }
-
-    // Удалить все дружеские связи между всеми пользователями
-    public void clearAllFriendships() {
-        friendshipStorage.clear();
-    }
-    */
 }
