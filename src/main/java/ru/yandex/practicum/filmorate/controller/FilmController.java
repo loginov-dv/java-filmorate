@@ -52,7 +52,7 @@ public class FilmController {
 
     // Эндпоинт PUT /films
     @PutMapping
-    public FilmDto update(@RequestBody UpdateFilmRequest request) {
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest request) {
         logger.debug("Вызов эндпоинта PUT /films");
         return filmService.update(request);
     }
