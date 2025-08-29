@@ -115,8 +115,8 @@ public class UserService {
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
         if (userRepository.getById(friendId).isEmpty()) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+            logger.warn("Пользователь с id = {} не найден", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         }
         if (userId == friendId) {
             logger.warn("Нельзя добавить пользователя в друзья к самому себе");
@@ -143,8 +143,8 @@ public class UserService {
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
         if (userRepository.getById(friendId).isEmpty()) {
-            logger.warn("Пользователь с id = {} не найден", userId);
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+            logger.warn("Пользователь с id = {} не найден", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         }
 
         userRepository.removeFriend(userId, friendId);
