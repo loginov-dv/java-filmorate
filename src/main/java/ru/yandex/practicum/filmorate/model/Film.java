@@ -11,7 +11,7 @@ import java.util.Set;
 // Модель данных для описания фильма
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"id", "description"/*, "likes"*/})
+@EqualsAndHashCode(exclude = {"id", "description"})
 @ToString
 public class Film {
     // Идентификатор
