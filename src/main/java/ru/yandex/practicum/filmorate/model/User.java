@@ -14,6 +14,7 @@ public class User {
     private Integer id;
     // Электронная почта
     @NotBlank(message = "Электронная почта не может быть пустой")
+    @Pattern(regexp = "^\\S+$", message = "Электронная почта не может содержать пробелы")
     @Email(message = "Электронная почта не соответствует формату")
     private String email;
     // Логин
