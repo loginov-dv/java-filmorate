@@ -62,12 +62,11 @@ class UserRepositoryTest {
 
     @Test
     void shouldCreateUser() {
-        User newUser = User.builder()
-                .email("new@example.com")
-                .login("new")
-                .name("new")
-                .birthday(LocalDate.of(2000, 10, 10))
-                .build();
+        User newUser = new User();
+        newUser.setEmail("new@example.com");
+        newUser.setLogin("new");
+        newUser.setName("new");
+        newUser.setBirthday(LocalDate.of(2000, 10, 10));
 
         User newUserFromDB = userRepository.create(newUser);
 
@@ -88,13 +87,12 @@ class UserRepositoryTest {
 
     @Test
     void shouldUpdateUser() {
-        User updatedUser = User.builder()
-                .id(2)
-                .email("update@example.com")
-                .login("update")
-                .name("update")
-                .birthday(LocalDate.of(1990, 5, 5))
-                .build();
+        User updatedUser = new User();
+        updatedUser.setId(2);
+        updatedUser.setEmail("update@example.com");
+        updatedUser.setLogin("update");
+        updatedUser.setName("update");
+        updatedUser.setBirthday(LocalDate.of(1990, 5, 5));
 
         userRepository.update(updatedUser);
 
