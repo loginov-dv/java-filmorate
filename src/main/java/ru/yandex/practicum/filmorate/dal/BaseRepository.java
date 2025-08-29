@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 
@@ -65,5 +66,13 @@ public class BaseRepository<T> {
 
     protected List<Integer> findManyInts(String query, Object... params) {
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getInt(1), params);
+    }
+
+    protected List<T> findMany(String query, ResultSetExtractor<List<T>> resultSetExtractor, Object... params) {
+        return jdbcTemplate.query(query, resultSetExtractor, params);
+    }
+
+    protected Optional<T> findOne(String query, ResultSetExtractor<List<T>> resultSetExtractor, Object... params) {
+        return Optional.ofNullable(jdbcTemplate.query(query, resultSetExtractor, params).getFirst());
     }
 }
