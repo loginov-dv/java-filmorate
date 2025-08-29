@@ -12,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 // Базовый класс репозитория для работы с таблицами
@@ -73,6 +74,12 @@ public class BaseRepository<T> {
     }
 
     protected Optional<T> findOne(String query, ResultSetExtractor<List<T>> resultSetExtractor, Object... params) {
-        return Optional.ofNullable(jdbcTemplate.query(query, resultSetExtractor, params).getFirst());
+        List<T> result = jdbcTemplate.query(query, resultSetExtractor, params);
+
+        if (result != null && result.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.ofNullable(result.getFirst());
+        }
     }
 }
