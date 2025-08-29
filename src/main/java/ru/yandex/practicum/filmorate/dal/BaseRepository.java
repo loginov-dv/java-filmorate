@@ -62,4 +62,8 @@ public class BaseRepository<T> {
             throw new RuntimeException("Не удалось сохранить данные");
         }
     }
+
+    protected List<Integer> findManyInts(String query, Object... params) {
+        return jdbcTemplate.query(query, (rs, rowNum) -> rs.getInt(1), params);
+    }
 }
