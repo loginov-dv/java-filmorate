@@ -24,12 +24,13 @@ public final class UserMapper {
 
     // Преобразовать NewUserRequest в User
     public static User mapToUser(NewUserRequest request) {
-        return User.builder()
-                .email(request.getEmail())
-                .login(request.getLogin())
-                .name(request.getName())
-                .birthday(request.getBirthday())
-                .build();
+        User user = new User();
+        user.setEmail(request.getEmail());
+        user.setLogin(request.getLogin());
+        user.setName(request.getName());
+        user.setBirthday(request.getBirthday());
+
+        return user;
     }
 
     // Обновить поля объекта класса User
