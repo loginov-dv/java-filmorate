@@ -18,7 +18,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<List<Film>> {
     public List<Film> extractData(ResultSet resultSet) throws SQLException, DataAccessException {
         final Map<Integer, Film> filmMap = new LinkedHashMap<>();
 
-        while(resultSet.next()) {
+        while (resultSet.next()) {
             Integer filmId = resultSet.getInt("film_id");
 
             Film film = filmMap.get(filmId);
