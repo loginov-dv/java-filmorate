@@ -12,7 +12,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 // Базовый класс репозитория для работы с таблицами
