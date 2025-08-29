@@ -166,6 +166,12 @@ public class FilmService {
             throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
 
+        if (filmRepository.getLikesUserId(filmId).contains(userId)) {
+            logger.warn("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
+            throw new ValidationException("Пользователь с id = " + userId +
+                    " уже поставил лайк фильму с id = " + filmId);
+        }
+
         filmRepository.putLike(filmId, userId);
         logger.info("Пользователь с id = {} поставил лайк фильму с id = {}", userId, filmId);
     }
