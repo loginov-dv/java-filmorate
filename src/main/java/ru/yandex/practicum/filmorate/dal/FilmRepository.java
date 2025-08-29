@@ -34,6 +34,7 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String GET_POPULAR_QUERY = "SELECT f.film_id, f.name, f.description, f.release_date, " +
             "f.duration, f.rating_id FROM " + TABLE_NAME + " AS f JOIN film_likes AS fl ON f.film_id = fl.film_id " +
             "GROUP BY f.film_id ORDER BY COUNT(fl.user_id) DESC LIMIT ?";
+    private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
 
@@ -102,5 +103,10 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Film> getPopular(int count) {
         logger.debug("Запрос на получение первых {} популярных фильмов", count);
         return findMany(GET_POPULAR_QUERY, count);
+    }
+
+    public List<Integer> getLikesUserId(int filmId) {
+        logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
+        return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
     }
 }
