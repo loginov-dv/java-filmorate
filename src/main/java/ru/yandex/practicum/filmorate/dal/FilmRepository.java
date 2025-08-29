@@ -67,7 +67,7 @@ public class FilmRepository extends BaseRepository<Film> {
         for (Genre genre : film.getGenres()) {
             insert(INSERT_FILM_GENRE_QUERY, film.getId(), genre.getId());
             logger.debug("Добавлена строка в таблицу film_genres: film_id = {}, genre_id = {}",
-                    genre.getId(), film.getId());
+                    film.getId(), genre.getId());
         }
 
         logger.debug("Добавлена строка в таблицу films с id = {}", id);
