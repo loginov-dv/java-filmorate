@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
+import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.dal.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -30,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @Sql(scripts = { "/schema.sql", "/data.sql", "/test-data.sql" })
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = { FilmRowMapper.class, FilmRepository.class,
-        GenreRowMapper.class, GenreRepository.class })
+        GenreRowMapper.class, GenreRepository.class, FilmResultSetExtractor.class })
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FilmRepositoryTest {
     private final FilmRepository filmRepository;
