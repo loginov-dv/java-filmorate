@@ -52,11 +52,7 @@ public class FilmService {
     public List<FilmDto> getAll() {
         logger.debug("Запрос на получение всех фильмов");
 
-        List<Film> films = filmRepository.getAll().stream()
-                .map(this::getMpaAndGenres)
-                .collect(Collectors.toList());
-
-        return films.stream()
+        return filmRepository.getAll().stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
@@ -72,26 +68,7 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + id + " не найден");
         }
 
-        Film film = getMpaAndGenres(maybeFilm.get());
-
-        return FilmMapper.mapToFilmDto(film);
-    }
-
-    // Добавить рейтинг и жанры
-    private Film getMpaAndGenres(Film film) {
-        Optional<MpaRating> maybeRating = mpaRepository.getById(film.getRating().getId());
-
-        if (maybeRating.isEmpty()) {
-            logger.warn("Рейтинг с id = {} не найден", film.getRating().getId());
-            throw new NotFoundException("Рейтинг с id = " + film.getRating().getId() + " не найден");
-        }
-
-        List<Genre> genres = genreRepository.getByFilmId(film.getId());
-
-        film.setRating(maybeRating.get());
-        film.setGenres(new HashSet<>(genres));
-
-        return film;
+        return FilmMapper.mapToFilmDto(maybeFilm.get());
     }
 
     // Создать новый фильм
@@ -210,7 +187,6 @@ public class FilmService {
                 .map(Film::getId)
                 .collect(Collectors.toList()));
         return popular.stream()
-                .map(this::getMpaAndGenres)
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
