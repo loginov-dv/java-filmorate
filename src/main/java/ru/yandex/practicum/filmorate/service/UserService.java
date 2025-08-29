@@ -90,15 +90,16 @@ public class UserService {
             throw new NotFoundException("Пользователь с id = " + request.getId() + " не найден");
         }
 
-        logger.debug("Исходное состояние: {}", maybeUser.get());
+        User user = maybeUser.get();
+        logger.debug("Исходное состояние: {}", user);
 
-        if (!maybeUser.get().getEmail().equals(request.getEmail())
+        if (request.getEmail() != null && !user.getEmail().equals(request.getEmail())
                 && userRepository.getByEmail(request.getEmail()).isPresent()) {
             logger.warn("Этот email уже используется");
             throw new ValidationException("Этот email уже используется");
         }
 
-        User updatedUser = UserMapper.updateUserFields(maybeUser.get(), request);
+        User updatedUser = UserMapper.updateUserFields(user, request);
         updatedUser = userRepository.update(updatedUser);
 
         logger.info("Изменен пользователь: {}", updatedUser);
