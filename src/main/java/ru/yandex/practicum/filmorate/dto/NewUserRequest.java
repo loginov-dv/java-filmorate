@@ -12,6 +12,7 @@ import java.time.LocalDate;
 @Data
 public class NewUserRequest {
     @NotBlank(message = "Электронная почта не может быть пустой")
+    @Pattern(regexp = "^\\S+$", message = "Электронная почта не может содержать пробелы")
     @Email(message = "Электронная почта не соответствует формату")
     private String email;
     @NotBlank(message = "Логин не может быть пустым")
