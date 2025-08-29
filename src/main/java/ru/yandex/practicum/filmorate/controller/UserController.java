@@ -52,7 +52,7 @@ public class UserController {
 
     // Эндпоинт PUT /users
     @PutMapping
-    public UserDto update(@RequestBody UpdateUserRequest request) {
+    public UserDto update(@Valid @RequestBody UpdateUserRequest request) {
         logger.debug("Вызов эндпоинта PUT /users");
         return userService.update(request);
     }
