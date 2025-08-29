@@ -1,7 +1,6 @@
 package ru.yandex.practicum.filmorate.model;
 
 import jakarta.validation.constraints.*;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 
 // Модель данных для описания пользователя
 @Data
-@Builder
 @EqualsAndHashCode(of = {"email"})
 public class User {
     // Идентификатор
