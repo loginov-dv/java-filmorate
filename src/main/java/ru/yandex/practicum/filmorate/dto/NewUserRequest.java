@@ -1,29 +1,24 @@
-package ru.yandex.practicum.filmorate.model;
+package ru.yandex.practicum.filmorate.dto;
 
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
 
-// Модель данных для описания пользователя
+// Класс, содержащий данные, необходимые для создания нового пользователя
 @Data
-@EqualsAndHashCode(of = {"email"})
-public class User {
-    // Идентификатор
-    private Integer id;
-    // Электронная почта
+public class NewUserRequest {
     @NotBlank(message = "Электронная почта не может быть пустой")
     @Pattern(regexp = "^\\S+$", message = "Электронная почта не может содержать пробелы")
     @Email(message = "Электронная почта не соответствует формату")
     private String email;
-    // Логин
     @NotBlank(message = "Логин не может быть пустым")
     @Pattern(regexp = "^\\S+$", message = "Логин не может содержать пробелы")
     private String login;
-    // Имя
     private String name;
-    // Дата рождения
     @Past(message = "Дата рождения не может быть в будущем")
     private LocalDate birthday;
 }

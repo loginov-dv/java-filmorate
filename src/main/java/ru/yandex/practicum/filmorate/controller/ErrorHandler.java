@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -42,10 +43,16 @@ public class ErrorHandler {
         return new ErrorMessage(String.join(". ", errors));
     }
 
+    @ExceptionHandler(DataAccessException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorMessage handleDataAccessException(final DataAccessException ex) {
+        return new ErrorMessage(ex.getMessage());
+    }
+
     // Обработчик всех прочих исключений
     @ExceptionHandler
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorMessage handleUnpredictedException(final Throwable ex) {
-        return new ErrorMessage("Произошла непредвиденная ошибка");
+        return new ErrorMessage("Произошла непредвиденная ошибка: " + ex.getMessage());
     }
 }

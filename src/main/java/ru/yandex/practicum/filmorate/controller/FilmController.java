@@ -1,14 +1,18 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
-import java.util.Collection;
+import java.util.List;
 
 // Контроллер для работы с фильмами
 @RestController
@@ -16,6 +20,8 @@ import java.util.Collection;
 public class FilmController {
     // Сервис работы с фильмами
     private final FilmService filmService;
+    // Логгер
+    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
 
     @Autowired
     public FilmController(FilmService filmService) {
@@ -24,33 +30,39 @@ public class FilmController {
 
     // Эндпоинт GET /films
     @GetMapping
-    public Collection<Film> getAll() {
+    public List<FilmDto> getAll() {
+        logger.debug("Вызов эндпоинта GET /films");
         return filmService.getAll();
     }
 
     // Эндпоинт GET /films/{id}
     @GetMapping("/{id}")
-    public Film getById(@PathVariable int id) {
+    public FilmDto getById(@PathVariable int id) {
+        logger.debug("Вызов эндпоинта GET /films/{id}");
         return filmService.getById(id);
     }
 
     // Эндпоинт POST /films
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Film create(@Valid @RequestBody Film film) {
-        return filmService.create(film);
+    public FilmDto create(@Valid @RequestBody NewFilmRequest request) {
+        logger.debug("Вызов эндпоинта POST /films");
+        return filmService.create(request);
     }
 
     // Эндпоинт PUT /films
     @PutMapping
-    public Film update(@Valid @RequestBody Film newFilm) {
-        return filmService.update(newFilm);
+    public FilmDto update(@Valid @RequestBody UpdateFilmRequest request) {
+        logger.debug("Вызов эндпоинта PUT /films");
+        return filmService.update(request);
     }
+
 
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
     public void putLike(@PathVariable int id,
                         @PathVariable int userId) {
+        logger.debug("Вызов эндпоинта PUT /films/{id}/like/{userId}");
         filmService.putLike(id, userId);
     }
 
@@ -58,24 +70,14 @@ public class FilmController {
     @DeleteMapping("/{id}/like/{userId}")
     public void removeLike(@PathVariable int id,
                            @PathVariable int userId) {
+        logger.debug("Вызов эндпоинта DELETE /films/{id}/like/{userId}");
         filmService.removeLike(id, userId);
     }
 
     // Эндпоинт GET /films/popular/count?=count
     @GetMapping("/popular")
-    public Collection<Film> getPopular(@RequestParam(defaultValue = "10") int count) {
+    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count) {
+        logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
         return filmService.getPopular(count);
-    }
-
-    // Вспомогательный эндпоинт DELETE /films/likes/clear (для удаления всех лайков и изоляции тестов)
-    @DeleteMapping("/likes/clear")
-    public void clearLikes() {
-        filmService.clearLikes();
-    }
-
-    // Вспомогательный эндпоинт DELETE /films для удаления элементов в хранилище (чтобы обеспечить изоляцию тестов)
-    @DeleteMapping("/clear")
-    public void clear() {
-        filmService.clear();
     }
 }

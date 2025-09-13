@@ -1,0 +1,28 @@
+DELETE FROM friendships;
+DELETE FROM film_likes;
+DELETE FROM film_genres;
+DELETE FROM films;
+DELETE FROM users;
+DELETE FROM genres;
+DELETE FROM ratings;
+
+ALTER TABLE friendships ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE film_likes ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE film_genres ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE films ALTER COLUMN film_id RESTART WITH 1;
+ALTER TABLE users ALTER COLUMN user_id RESTART WITH 1;
+ALTER TABLE genres ALTER COLUMN genre_id RESTART WITH 1;
+ALTER TABLE ratings ALTER COLUMN rating_id RESTART WITH 1;
+
+INSERT INTO genres(name) VALUES('Комедия');
+INSERT INTO genres(name) VALUES('Драма');
+INSERT INTO genres(name) VALUES('Мультфильм');
+INSERT INTO genres(name) VALUES('Триллер');
+INSERT INTO genres(name) VALUES('Документальный');
+INSERT INTO genres(name) VALUES('Боевик');
+
+INSERT INTO ratings(name) VALUES('G');
+INSERT INTO ratings(name) VALUES('PG');
+INSERT INTO ratings(name) VALUES('PG-13');
+INSERT INTO ratings(name) VALUES('R');
+INSERT INTO ratings(name) VALUES('NC-17');
