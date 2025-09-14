@@ -332,4 +332,87 @@ class FilmControllerTest {
         assertNotNull(popularFilms);
         assertEquals(3, popularFilms.size());
     }
+
+    // Тесты поиска
+
+    @Test
+    void shouldSearchFilmsByTitle() throws Exception {
+        // создаём фильм, который точно будет найден по подстроке "крад"
+        NewFilmRequest req = new NewFilmRequest();
+        req.setName("Крадущийся тестовый фильм");
+        req.setDescription("desc");
+        req.setReleaseDate(LocalDate.of(2012, 12, 12));
+        req.setDuration(112);
+        MpaIdDto mpa = new MpaIdDto();
+        mpa.setId(1);
+        req.setMpa(mpa);
+
+        MvcResult createRes = mockMvc.perform(post(FILMS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(req)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        FilmDto created = gson.fromJson(createRes.getResponse().getContentAsString(), FilmDto.class);
+
+        // поиск
+        MvcResult searchRes = mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "крад")
+                        .param("by", "title"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TypeToken<List<FilmDto>> typeToken = new TypeToken<>() {};
+        List<FilmDto> list = gson.fromJson(searchRes.getResponse().getContentAsString(), typeToken.getType());
+
+        assertNotNull(list);
+        // убеждаемся, что только что созданный фильм попал в результаты
+        boolean contains = list.stream().anyMatch(f -> f.getId() == created.getId());
+        Assertions.assertTrue(contains, "Созданный фильм должен присутствовать в результатах поиска");
+    }
+
+    @Test
+    void shouldSearchByTitleWhenByIsOmitted() throws Exception {
+        // создаём уникальный фильм и ищем по точному названию без параметра by
+        NewFilmRequest req = new NewFilmRequest();
+        req.setName("УникальныйПоискПоНазванию");
+        req.setDescription("desc");
+        req.setReleaseDate(LocalDate.of(2015, 5, 5));
+        req.setDuration(90);
+        MpaIdDto mpa = new MpaIdDto();
+        mpa.setId(1);
+        req.setMpa(mpa);
+
+        mockMvc.perform(post(FILMS_URL)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(gson.toJson(req)))
+                .andExpect(status().isCreated());
+
+        MvcResult searchRes = mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "УникальныйПоискПоНазванию"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TypeToken<List<FilmDto>> typeToken = new TypeToken<>() {};
+        List<FilmDto> list = gson.fromJson(searchRes.getResponse().getContentAsString(), typeToken.getType());
+        assertNotNull(list);
+        Assertions.assertTrue(list.stream().anyMatch(f -> "УникальныйПоискПоНазванию".equals(f.getName())),
+                "Фильм должен находиться по названию, даже если параметр by не указан");
+    }
+
+    @Test
+    void shouldReturnBadRequestOnBlankQuery() throws Exception {
+        mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "   ")
+                        .param("by", "title"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestOnUnsupportedBy() throws Exception {
+        mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "крад")
+                        .param("by", "director"))
+                .andExpect(status().isBadRequest());
+    }
 }

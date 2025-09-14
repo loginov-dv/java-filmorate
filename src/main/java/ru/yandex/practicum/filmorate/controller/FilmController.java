@@ -16,7 +16,7 @@ import java.util.List;
 
 // Контроллер для работы с фильмами
 @RestController
-@RequestMapping("/films")
+@RequestMapping(value = "/films", produces = "application/json;charset=UTF-8")
 public class FilmController {
     // Сервис работы с фильмами
     private final FilmService filmService;
@@ -56,7 +56,6 @@ public class FilmController {
         logger.debug("Вызов эндпоинта PUT /films");
         return filmService.update(request);
     }
-
 
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
