@@ -80,4 +80,12 @@ public class FilmController {
         logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
         return filmService.getPopular(count);
     }
+
+    // Эндпоинт GET /films/search?query=...&by=...
+    @GetMapping("/search")
+    public List<FilmDto> search(@RequestParam String query,
+                                @RequestParam(name = "by", defaultValue = "title") String by) {
+        logger.debug("Вызов эндпоинта GET /films/search");
+        return filmService.search(query, by);
+    }
 }
