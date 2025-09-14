@@ -78,11 +78,34 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
-            GROUP BY film_id, genre_id
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration, r.rating_id, r.name, g.genre_id, g.name
             ORDER BY COUNT(fl.user_id) DESC
             LIMIT ?
             """;
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+
+    // Поиск по названию, отсортировано по популярности
+    private static final String SEARCH_BY_TITLE_QUERY = """
+            SELECT
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
+                r.rating_id AS rating_id,
+                r.name AS rating_name,
+                g.genre_id AS genre_id,
+                g.name AS genre_name
+            FROM films AS f
+            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_likes AS fl ON f.film_id = fl.film_id
+            WHERE LOWER(f.name) LIKE ?
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration, r.rating_id, r.name, g.genre_id, g.name
+            ORDER BY COUNT(fl.user_id) DESC
+            """;
+
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -160,5 +183,12 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    // Поиск фильмов по названию, результаты отсортированы по популярности
+    public List<Film> searchByTitle(String query) {
+        logger.debug("Запрос на поиск фильмов по названию, query = {}", query);
+        String pattern = "%" + (query == null ? "" : query.toLowerCase()) + "%";
+        return findMany(SEARCH_BY_TITLE_QUERY, filmResultSetExtractor, pattern);
     }
 }
