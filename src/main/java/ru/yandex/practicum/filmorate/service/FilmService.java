@@ -19,10 +19,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // Сервис по работе с фильмами
@@ -187,6 +184,54 @@ public class FilmService {
                 .map(Film::getId)
                 .collect(Collectors.toList()));
         return popular.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
+
+    // Поиск фильмов по подстроке в названии, сортировка по популярности
+    public List<FilmDto> search(String query, String by) {
+        logger.debug("Запрос на поиск фильмов: query='{}', by='{}'", query, by);
+
+        if (query == null || query.isBlank()) {
+            logger.warn("Параметр query не может быть пустым");
+            throw new ValidationException("Параметр query не может быть пустым");
+        }
+
+        // Разбираем параметр by (director,title). Пока поддерживаем только title.
+        Set<String> bySet = Arrays.stream(Optional.ofNullable(by).orElse("title").split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+
+        boolean byTitle = bySet.contains("title");
+        boolean byDirector = bySet.contains("director");
+
+        if (!byTitle && byDirector) {
+            logger.warn("Поиск по режиссёру пока не поддерживается");
+            throw new ValidationException("Поиск по режиссёру пока не поддерживается");
+        }
+        if (!byTitle) {
+            logger.warn("Параметр by должен содержать 'title'");
+            throw new ValidationException("Параметр by должен содержать 'title'");
+        }
+
+        String q = query.toLowerCase();
+
+        // Ищем по названию и сортируем по количеству лайков (популярности)
+        List<Film> matched = filmRepository.getAll().stream()
+                .filter(f -> f.getName() != null && f.getName().toLowerCase().contains(q))
+                .sorted((a, b) -> {
+                    int likesA = filmRepository.getLikesUserId(a.getId()).size();
+                    int likesB = filmRepository.getLikesUserId(b.getId()).size();
+                    return Integer.compare(likesB, likesA); // по убыванию
+                })
+                .collect(Collectors.toList());
+
+        logger.info("Найдено фильмов по запросу '{}': {}", query,
+                matched.stream().map(Film::getId).collect(Collectors.toList()));
+
+        return matched.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
