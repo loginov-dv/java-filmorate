@@ -9,5 +9,5 @@ public class ReviewDto {
     private Boolean isPositive;
     private Integer userId; // Пользователь
     private Integer filmId; // Фильм
-    private Integer useful; // Рейтинг
+    private Integer useful; // Рейтинг полезности
 }
