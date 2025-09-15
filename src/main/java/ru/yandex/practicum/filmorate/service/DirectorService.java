@@ -80,7 +80,7 @@ public class DirectorService {
     }
 
     public void removeById(int id) {
-        logger.debug("Запрос на изменение режиссёра с id = {}", id);
+        logger.debug("Запрос на удаление режиссёра с id = {}", id);
 
         Optional<Director> maybeDirector = directorRepository.getById(id);
 
