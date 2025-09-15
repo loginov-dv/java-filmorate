@@ -73,7 +73,7 @@ public class ReviewController {
 
     // Эндпоинт PUT /reviews/{id}/like/{userId} — поставить лайк отзыву
     @PutMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void putLike(@PathVariable int id, @PathVariable int userId) {
         logger.debug("Вызов эндпоинта PUT /reviews/{}/like/{}", id, userId);
         reviewService.putLike(id, userId);
@@ -81,7 +81,7 @@ public class ReviewController {
 
     // Эндпоинт PUT /reviews/{id}/dislike/{userId} — поставить дизлайк отзыву
     @PutMapping("/{id}/dislike/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void putDislike(@PathVariable int id, @PathVariable int userId) {
         logger.debug("Вызов эндпоинта PUT /reviews/{}/dislike/{}", id, userId);
         reviewService.putDislike(id, userId);
@@ -89,7 +89,7 @@ public class ReviewController {
 
     // Эндпоинт DELETE /reviews/{id}/like/{userId} — удалить лайк
     @DeleteMapping("/{id}/like/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void removeLike(@PathVariable int id, @PathVariable int userId) {
         logger.debug("Вызов эндпоинта DELETE /reviews/{}/like/{}", id, userId);
         reviewService.removeLike(id, userId);
@@ -97,7 +97,7 @@ public class ReviewController {
 
     // Эндпоинт DELETE /reviews/{id}/dislike/{userId} — удалить дизлайк
     @DeleteMapping("/{id}/dislike/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     public void removeDislike(@PathVariable int id, @PathVariable int userId) {
         logger.debug("Вызов эндпоинта DELETE /reviews/{}/dislike/{}", id, userId);
         reviewService.removeDislike(id, userId);
