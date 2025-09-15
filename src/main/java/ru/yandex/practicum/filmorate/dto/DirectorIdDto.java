@@ -5,7 +5,7 @@ import lombok.Data;
 
 // Director dto
 @Data
-public class DirectorDto {
+public class DirectorIdDto {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private int id;
 }
