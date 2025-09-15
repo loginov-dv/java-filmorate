@@ -110,7 +110,7 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
             WHERE d.director_id = ?
             GROUP BY film_id, genre_id
-            ORDER BY EXTRACT(YEAR FROM CAST(f.release_date AS year)) DESC
+            ORDER BY EXTRACT(YEAR FROM CAST(f.release_date AS date))
             """;
     private static final String GET_DIRECTORS_FILMS_ORDERED_BY_LIKES = """
             SELECT
@@ -126,6 +126,7 @@ public class FilmRepository extends BaseRepository<Film> {
             FROM directors AS d
             JOIN film_directors AS fd ON d.director_id = fd.director_id
             JOIN films AS f ON fd.film_id = f.film_id
+            JOIN film_likes AS fl ON f.film_id = fl.film_id
             LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
@@ -194,7 +195,9 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
 
         List<Integer> oldDirectors = super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId());
-        List<Integer> newDirectors = film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
+        List<Integer> newDirectors = film.getDirectors() == null
+                ? Collections.emptyList()
+                : film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
 
         List<Integer> directorsToRemove = oldDirectors.stream()
                 .filter(item -> !newDirectors.contains(item))
