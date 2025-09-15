@@ -85,7 +85,7 @@ public class FilmController {
     }
 
     // Эндпоинт GET /films/director/{directorId}?sortBy=[year,likes]
-    @GetMapping
+    @GetMapping("/director/{directorId}")
     public List<FilmDto> getDirectorsFilm(@PathVariable int directorId,
                                           @RequestParam String sortBy) {
         logger.debug("Вызов эндпоинта GET /films/director/{directorId}?sortBy=[year,likes]");
