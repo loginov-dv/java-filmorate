@@ -3,6 +3,7 @@ package ru.yandex.practicum.filmorate.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.*;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -46,7 +47,8 @@ public final class FilmMapper {
     }
 
     // Преобразовать NewFilmRequest в Film
-    public static Film mapToFilm(NewFilmRequest request, MpaRating mpaRating, Set<Genre> genres) {
+    public static Film mapToFilm(NewFilmRequest request, MpaRating mpaRating,
+                                 Set<Genre> genres, Set<Director> directors) {
         Film film = new Film();
         film.setName(request.getName());
         film.setDescription(request.getDescription());
@@ -55,12 +57,13 @@ public final class FilmMapper {
 
         film.setRating(mpaRating);
         film.setGenres(genres);
+        film.setDirectors(directors);
 
         return film;
     }
 
     // Обновить поля объекта класса Film
-    public static Film updateFilmFields(Film film, UpdateFilmRequest request) {
+    public static Film updateFilmFields(Film film, UpdateFilmRequest request, Set<Director> directors) {
         if (request.hasName()) {
             film.setName(request.getName());
         }
@@ -75,6 +78,10 @@ public final class FilmMapper {
 
         if (request.hasDuration()) {
             film.setDuration(request.getDuration());
+        }
+
+        if (request.hasDirectors()) {
+            film.setDirectors(directors);
         }
 
         return film;
