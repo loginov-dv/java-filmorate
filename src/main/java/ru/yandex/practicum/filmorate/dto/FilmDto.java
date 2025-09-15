@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
@@ -28,4 +29,5 @@ public class FilmDto {
     private int duration;
     private MpaRating mpa;
     private Set<Genre> genres;
+    private Set<Director> directors;
 }

@@ -33,4 +33,6 @@ public class Film {
     private MpaRating rating;
     // Жанры
     private Set<Genre> genres;
+    // Режиссёры
+    private Set<Director> directors;
 }
