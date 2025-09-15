@@ -27,9 +27,8 @@ public class ReviewController {
         this.reviewService = reviewService;
     }
 
-    // Эндпоинт POST /reviews — добавление нового отзыва
+    // Эндпоинт POST /reviews — добавление нового отзыва (200 OK)
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ReviewDto create(@Valid @RequestBody NewReviewRequest request) {
         logger.debug("Вызов эндпоинта POST /reviews");
         Review created = reviewService.create(ReviewMapper.mapToReview(request));
