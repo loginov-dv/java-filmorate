@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -48,6 +49,8 @@ public final class FilmMapper {
                     .sorted(Comparator.comparingInt(Director::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             dto.setDirectors(directors);
+        } else {
+            dto.setDirectors(Collections.emptySet());
         }
 
         return dto;
