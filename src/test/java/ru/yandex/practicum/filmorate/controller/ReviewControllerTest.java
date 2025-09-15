@@ -37,14 +37,14 @@ class ReviewControllerTest {
     ObjectMapper om;
 
     @Test
-    @DisplayName("POST /reviews — создаёт отзыв с useful=0 и возвращает 201")
-    void createReview_returns201() throws Exception {
+    @DisplayName("POST /reviews — создаёт отзыв с useful=0 и возвращает 200")
+    void createReview_returns200() throws Exception {
         String body = "{\"content\":\"Nice movie\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
 
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reviewId", notNullValue()))
                 .andExpect(jsonPath("$.content", is("Nice movie")))
                 .andExpect(jsonPath("$.isPositive", is(true)))
@@ -54,14 +54,14 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /reviews — обновляет текст/тональность")
+    @DisplayName("PUT /reviews — обновляет текст/тональность и возвращает 200")
     void updateReview_updatesFields() throws Exception {
         // создаём
         String create = "{\"content\":\"Old\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(create))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
 
         int id = om.readTree(created).get("reviewId").asInt();
@@ -79,41 +79,45 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("PUT/DELETE like|dislike — корректно меняют рейтинг useful")
+    @DisplayName("PUT/DELETE like|dislike — корректно меняют рейтинг useful (везде 200)")
     void reactions_changeUseful() throws Exception {
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"X\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
+                .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         int id = om.readTree(created).get("reviewId").asInt();
 
         mockMvc.perform(put("/reviews/{id}/like/{userId}", id, 1))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
         mockMvc.perform(get("/reviews/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.useful", is(1)));
 
         // смена на dislike тем же user=1: +1 -> -1 (дельта -2)
         mockMvc.perform(put("/reviews/{id}/dislike/{userId}", id, 1))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
         mockMvc.perform(get("/reviews/{id}", id))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.useful", is(-1)));
 
         // удаляем дизлайк: -1 -> 0 (дельта +1)
         mockMvc.perform(delete("/reviews/{id}/dislike/{userId}", id, 1))
-                .andExpect(status().isNoContent());
+                .andExpect(status().isOk());
         mockMvc.perform(get("/reviews/{id}", id))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.useful", is(0)));
     }
 
     @Test
-    @DisplayName("GET /reviews?filmId=... — сортирует по useful по убыванию")
+    @DisplayName("GET /reviews?filmId=... — сортирует по useful по убыванию (200)")
     void listByFilm_sortedByUsefulDesc() throws Exception {
         // r1
         int r1 = om.readTree(
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"content\":\"A\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
+                        .andExpect(status().isOk())
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 
@@ -122,12 +126,13 @@ class ReviewControllerTest {
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"content\":\"B\",\"isPositive\":false,\"userId\":2,\"filmId\":1}"))
+                        .andExpect(status().isOk())
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 
         // Подкручиваем полезность: r1(+1), r2(-1)
-        mockMvc.perform(put("/reviews/{id}/like/{userId}", r1, 2)).andExpect(status().isNoContent());
-        mockMvc.perform(put("/reviews/{id}/dislike/{userId}", r2, 1)).andExpect(status().isNoContent());
+        mockMvc.perform(put("/reviews/{id}/like/{userId}", r1, 2)).andExpect(status().isOk());
+        mockMvc.perform(put("/reviews/{id}/dislike/{userId}", r2, 1)).andExpect(status().isOk());
 
         // Ожидаем: r1 (useful=+1) первым, r2 (useful=-1) вторым
         mockMvc.perform(get("/reviews").param("filmId", "1").param("count", "10"))
@@ -137,7 +142,7 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("POST /reviews — проваливается с 400 при пустом контенте")
+    @DisplayName("POST /reviews — 400 при пустом контенте")
     void createReview_validationError() throws Exception {
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
