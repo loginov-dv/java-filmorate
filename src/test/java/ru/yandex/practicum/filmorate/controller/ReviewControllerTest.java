@@ -23,7 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "DELETE FROM film_genres",
         "DELETE FROM films",
         "DELETE FROM users",
-        // Вставляем предсказуемые id
         "INSERT INTO users(user_id, email, login, name, birthday) VALUES (1,'u1@mail','u1','User1','1990-01-01')",
         "INSERT INTO users(user_id, email, login, name, birthday) VALUES (2,'u2@mail','u2','User2','1990-01-01')",
         "INSERT INTO films(film_id, name, description, release_date, duration, rating_id) " +
@@ -40,14 +39,7 @@ class ReviewControllerTest {
     @Test
     @DisplayName("POST /reviews — создаёт отзыв с useful=0 и возвращает 201")
     void createReview_returns201() throws Exception {
-        String body = """
-            {
-              "content":"Nice movie",
-              "isPositive":true,
-              "userId":1,
-              "filmId":1
-            }
-            """;
+        String body = "{\"content\":\"Nice movie\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
 
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -65,14 +57,7 @@ class ReviewControllerTest {
     @DisplayName("PUT /reviews — обновляет текст/тональность")
     void updateReview_updatesFields() throws Exception {
         // создаём
-        String create = """
-            {
-              "content":"Old",
-              "isPositive":true,
-              "userId":1,
-              "filmId":1
-            }
-            """;
+        String create = "{\"content\":\"Old\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(create))
@@ -82,13 +67,7 @@ class ReviewControllerTest {
         int id = om.readTree(created).get("reviewId").asInt();
 
         // апдейтим
-        String update = """
-            {
-              "reviewId": %d,
-              "content":"New",
-              "isPositive": false
-            }
-            """.formatted(id);
+        String update = String.format("{\"reviewId\":%d,\"content\":\"New\",\"isPositive\":false}", id);
 
         mockMvc.perform(put("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -104,9 +83,7 @@ class ReviewControllerTest {
     void reactions_changeUseful() throws Exception {
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                            {"content":"X","isPositive":true,"userId":1,"filmId":1}
-                        """))
+                        .content("{\"content\":\"X\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
                 .andReturn().getResponse().getContentAsString();
         int id = om.readTree(created).get("reviewId").asInt();
 
@@ -136,9 +113,7 @@ class ReviewControllerTest {
         int r1 = om.readTree(
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {"content":"A","isPositive":true,"userId":1,"filmId":1}
-                                """))
+                                .content("{\"content\":\"A\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 
@@ -146,9 +121,7 @@ class ReviewControllerTest {
         int r2 = om.readTree(
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {"content":"B","isPositive":false,"userId":2,"filmId":1}
-                                """))
+                                .content("{\"content\":\"B\",\"isPositive\":false,\"userId\":2,\"filmId\":1}"))
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 
@@ -168,9 +141,7 @@ class ReviewControllerTest {
     void createReview_validationError() throws Exception {
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                            {"content":"  ","isPositive":true,"userId":1,"filmId":1}
-                        """))
+                        .content("{\"content\":\"  \",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
                 .andExpect(status().isBadRequest());
     }
 }
