@@ -140,6 +140,8 @@ public class FilmService {
                     logger.warn("Режиссёр с id = {} не найден", directorIdDto.getId());
                     throw new NotFoundException("Режиссёр с id = " + directorIdDto.getId() + " не найден");
                 }
+
+                directors.add(maybeDirector.get());
             }
         }
 
