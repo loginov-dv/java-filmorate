@@ -1,4 +1,4 @@
-package ru.yandex.practicum.filmorate.dal.mappers;
+package ru.yandex.practicum.filmorate.mapper;
 
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -19,6 +19,15 @@ public final class ReviewMapper {
         review.setUserId(req.getUserId());
         review.setFilmId(req.getFilmId());
         review.setUseful(0);
+        return review;
+    }
+
+    // Создаёт «патч» Review из запроса на обновление
+    public static Review mapToReview(UpdateReviewRequest req) {
+        Review review = new Review();
+        review.setReviewId(req.getReviewId());
+        review.setContent(req.getContent());
+        review.setIsPositive(req.getIsPositive());
         return review;
     }
 
