@@ -43,6 +43,13 @@ public final class FilmMapper {
             dto.setGenres(genres);*/
         }
 
+        if (film.getDirectors() != null) {
+            Set<Director> directors = film.getDirectors().stream()
+                    .sorted(Comparator.comparingInt(Director::getId))
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
+            dto.setDirectors(directors);
+        }
+
         return dto;
     }
 
