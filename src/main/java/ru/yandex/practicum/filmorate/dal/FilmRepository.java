@@ -91,6 +91,48 @@ public class FilmRepository extends BaseRepository<Film> {
             "VALUES(?, ?)";
     private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
             "WHERE film_id = ?";
+    private static final String GET_DIRECTORS_FILMS_ORDERED_BY_YEAR = """
+            SELECT
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
+                r.rating_id AS rating_id,
+                r.name AS rating_name,
+                g.genre_id AS genre_id,
+                g.name AS genre_name
+            FROM directors AS d
+            JOIN film_directors AS fd ON d.director_id = fd.director_id
+            JOIN films AS f ON fd.film_id = f.film_id
+            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+            WHERE d.director_id = ?
+            GROUP BY film_id, genre_id
+            ORDER BY EXTRACT(YEAR FROM CAST(f.release_date AS year)) DESC
+            """;
+    private static final String GET_DIRECTORS_FILMS_ORDERED_BY_LIKES = """
+            SELECT
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
+                r.rating_id AS rating_id,
+                r.name AS rating_name,
+                g.genre_id AS genre_id,
+                g.name AS genre_name
+            FROM directors AS d
+            JOIN film_directors AS fd ON d.director_id = fd.director_id
+            JOIN films AS f ON fd.film_id = f.film_id
+            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+            WHERE d.director_id = ?
+            GROUP BY film_id, genre_id
+            ORDER BY COUNT(fl.user_id) DESC
+            """;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -207,6 +249,16 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    public List<Film> searchDirectorsFilmsSortedByYear(int directorId) {
+        logger.debug("Запрос на получение всех фильмов режиссёра с id = {}, отсортированных по годам", directorId);
+        return findMany(GET_DIRECTORS_FILMS_ORDERED_BY_YEAR, directorId);
+    }
+
+    public List<Film> searchDirectorsFilmsSortedByLikes(int directorId) {
+        logger.debug("Запрос на получение всех фильмов режиссёра с id = {}, отсортированных по лайкам", directorId);
+        return findMany(GET_DIRECTORS_FILMS_ORDERED_BY_LIKES, directorId);
     }
 
     private String createPlaceholders(int count) {
