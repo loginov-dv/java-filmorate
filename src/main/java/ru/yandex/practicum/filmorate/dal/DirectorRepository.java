@@ -51,7 +51,7 @@ public class DirectorRepository extends BaseRepository<Director> {
 
     public Director update(Director director) {
         logger.debug("Запрос на обновление строки в таблице directors с id = {}", director.getId());
-        update(UPDATE_QUERY, director.getName());
+        update(UPDATE_QUERY, director.getName(), director.getId());
 
         logger.debug("Обновлена строка в таблице directors с id = {}", director.getId());
         return director;
