@@ -7,11 +7,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 // Класс-репозиторий для работы с таблицей "films"
 @Repository
@@ -83,6 +87,10 @@ public class FilmRepository extends BaseRepository<Film> {
             LIMIT ?
             """;
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+    private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO film_directors(film_id, director_id) " +
+            "VALUES(?, ?)";
+    private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
+            "WHERE film_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -123,6 +131,12 @@ public class FilmRepository extends BaseRepository<Film> {
                     film.getId(), genre.getId());
         }
 
+        for (Director director : film.getDirectors()) {
+            insert(INSERT_FILM_DIRECTOR_QUERY, film.getId(), director.getId());
+            logger.debug("Добавлена строка в таблицу film_directors: film_id = {}, director_id = {}",
+                    film.getId(), director.getId());
+        }
+
         logger.debug("Добавлена строка в таблицу films с id = {}", id);
         return film;
     }
@@ -135,8 +149,41 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getReleaseDate(),
                 film.getDuration(),
                 film.getId());
-
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
+
+        List<Integer> oldDirectors = super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId());
+        List<Integer> newDirectors = film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
+
+        List<Integer> directorsToRemove = oldDirectors.stream()
+                .filter(item -> !newDirectors.contains(item))
+                .collect(Collectors.toList());
+        List<Integer> directorsToAdd = newDirectors.stream()
+                .filter(item -> !oldDirectors.contains(item))
+                .collect(Collectors.toList());
+
+        if (!directorsToRemove.isEmpty()) {
+            String query = "DELETE FROM film_directors WHERE film_id = ? " +
+                    "AND director_id IN (" + createPlaceholders(directorsToRemove.size()) +")";
+            List<Integer> params = new ArrayList<>();
+            params.add(film.getId());
+            params.addAll(directorsToRemove);
+
+            update(query, params);
+            logger.debug("Удалены строки из таблицы film_directors, где film_id = {} и directors_id = {}",
+                    film.getId(), directorsToRemove);
+        }
+
+        if (!directorsToAdd.isEmpty()) {
+            String query = "INSERT INTO film_directors(film_id, director_id) VALUES(?, ?)";
+
+            for (Integer directorId : directorsToAdd) {
+                insert(query, film.getId(), directorId);
+            }
+
+            logger.debug("Добавлены строки в таблицу film_directors, где film_id = {} и directors_id = {}",
+                    film.getId(), directorsToAdd);
+        }
+
         return film;
     }
 
@@ -160,5 +207,9 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    private String createPlaceholders(int count) {
+        return String.join(",", Collections.nCopies(count, "?"));
     }
 }
