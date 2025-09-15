@@ -214,4 +214,30 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
+
+    public List<FilmDto> search(int directorId, String sortBy) {
+        Optional<Director> maybeDirector = directorRepository.getById(directorId);
+
+        if (maybeDirector.isEmpty()) {
+            logger.warn("Режиссёр с id = {} не найден", directorId);
+            throw new NotFoundException("Режиссёр с id = " + directorId + " не найден");
+        }
+
+        List<Film> searchResult;
+        if (sortBy.equals("year")) {
+            searchResult = filmRepository.searchDirectorsFilmsSortedByYear(directorId);
+        } else if (sortBy.equals("likes")) {
+            searchResult = filmRepository.searchDirectorsFilmsSortedByLikes(directorId);
+        } else {
+            logger.warn("Переданный параметр сортировки sortBy = {} не поддерживается", sortBy);
+            throw new NotFoundException("Переданный параметр сортировки sortBy = " + sortBy + " не поддерживается");
+        }
+
+        logger.info("Найденные фильмы: {}", searchResult.stream()
+                .map(Film::getId)
+                .collect(Collectors.toList()));
+        return searchResult.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
 }
