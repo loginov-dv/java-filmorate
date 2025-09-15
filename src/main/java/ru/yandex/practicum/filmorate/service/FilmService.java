@@ -190,4 +190,9 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
+
+    // Удалить фильм по id
+    public void removeFilmById(int filmId) {
+        filmRepository.removeFilmById(filmId);
+    }
 }

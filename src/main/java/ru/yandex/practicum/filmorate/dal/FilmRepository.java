@@ -83,6 +83,9 @@ public class FilmRepository extends BaseRepository<Film> {
             LIMIT ?
             """;
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+
+    private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE film_id = ?";
+
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -142,7 +145,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public void putLike(int filmId, int userId) {
         logger.debug("Запрос на вставку строки в таблицу film_likes");
-        insert(INSERT_FILM_LIKES_QUERY, filmId, userId);
+        insertWithoutKey(INSERT_FILM_LIKES_QUERY, filmId, userId);
         logger.debug("Добавлена строка в таблицу film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
@@ -160,5 +163,11 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    public void removeFilmById(int filmId) {
+        logger.debug("Запрос на удаление фильма из таблицы films для film_id = {}", filmId);
+        update(DELETE_FILM_QUERY, filmId);
+        logger.debug("Удалена строка из таблицы films: film_id = {}", filmId);
     }
 }

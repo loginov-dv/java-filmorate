@@ -80,4 +80,11 @@ public class FilmController {
         logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
         return filmService.getPopular(count);
     }
+
+    // Эндпоинт DELETE /films/{filmId}
+    @DeleteMapping("/{filmId}")
+    public void deleteFilm(@PathVariable int filmId) {
+        logger.debug("Вызов эндпоинта DELETE /films/{filmId}");
+        filmService.removeFilmById(filmId);
+    }
 }

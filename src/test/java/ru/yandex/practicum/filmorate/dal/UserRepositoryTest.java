@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @AutoConfigureTestDatabase
-@Sql(scripts = { "/schema.sql", "/data.sql", "/test-data.sql" })
+@Sql(scripts = {"/schema.sql", "/data.sql", "/test-data.sql"})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 @ContextConfiguration(classes = {UserRowMapper.class, UserRepository.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -151,5 +151,18 @@ class UserRepositoryTest {
         friends = userRepository.getFriends(1);
 
         assertEquals(2, friends.size());
+    }
+
+    @Test
+    void shouldRemoveUserById() {
+        User newUser = new User();
+        newUser.setEmail("new@example.com");
+        newUser.setLogin("new");
+        newUser.setName("new");
+        newUser.setBirthday(LocalDate.of(2000, 10, 10));
+
+        userRepository.create(newUser);
+        userRepository.removeUserById(1);
+        assertThat(userRepository.getById(1)).isEmpty();
     }
 }

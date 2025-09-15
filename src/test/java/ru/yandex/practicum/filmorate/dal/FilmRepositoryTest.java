@@ -28,10 +28,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @AutoConfigureTestDatabase
-@Sql(scripts = { "/schema.sql", "/data.sql", "/test-data.sql" })
+@Sql(scripts = {"/schema.sql", "/data.sql", "/test-data.sql"})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@ContextConfiguration(classes = { FilmRowMapper.class, FilmRepository.class,
-        GenreRowMapper.class, GenreRepository.class, FilmResultSetExtractor.class })
+@ContextConfiguration(classes = {FilmRowMapper.class, FilmRepository.class,
+        GenreRowMapper.class, GenreRepository.class, FilmResultSetExtractor.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FilmRepositoryTest {
     private final FilmRepository filmRepository;
@@ -157,5 +157,26 @@ class FilmRepositoryTest {
         assertIterableEquals(List.of(2, 3, 4), popular.stream()
                 .map(Film::getId)
                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    void shouldRemoveFilmById() {
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+
+        Genre genre = new Genre();
+        genre.setId(1);
+
+        Film newFilm = new Film();
+        newFilm.setName("new");
+        newFilm.setDescription("new");
+        newFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        newFilm.setDuration(120);
+        newFilm.setRating(mpa);
+        newFilm.setGenres(Set.of(genre));
+
+        filmRepository.create(newFilm);
+        filmRepository.removeFilmById(1);
+        assertThat(filmRepository.getById(1)).isEmpty();
     }
 }
