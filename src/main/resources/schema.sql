@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS film_likes (
     film_id INTEGER REFERENCES films(film_id) ON DELETE CASCADE,
-    user_id INTEGER REFERENCES users(user_id),
+    user_id INTEGER REFERENCES users(user_id) ON DELETE CASCADE,
     CONSTRAINT unique_film_like UNIQUE (film_id, user_id)
 );
 

@@ -74,7 +74,7 @@ public class FilmRepository extends BaseRepository<Film> {
                 g.genre_id AS genre_id,
                 g.name AS genre_name
             FROM films AS f
-            JOIN film_likes AS fl ON f.film_id = fl.film_id
+            LEFT JOIN film_likes AS fl ON f.film_id = fl.film_id
             LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
