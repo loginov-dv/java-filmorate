@@ -330,6 +330,6 @@ class FilmControllerTest {
         List<Film> popularFilms = gson.fromJson(json, typeToken.getType());
 
         assertNotNull(popularFilms);
-        assertEquals(3, popularFilms.size());
+        assertEquals(5, popularFilms.size());
     }
 }
