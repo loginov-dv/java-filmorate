@@ -3,10 +3,13 @@ package ru.yandex.practicum.filmorate.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.ReviewRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.UpdateReviewRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
+import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
 import ru.yandex.practicum.filmorate.model.Review;
 
 import java.util.List;
@@ -29,38 +32,40 @@ public class ReviewService {
     }
 
     // Создание нового отзыва
+    @Transactional
     public Review create(Review review) {
         logger.debug("Запрос на создание отзыва: filmId={}, userId={}", review.getFilmId(), review.getUserId());
-        validateForCreate(review);
+
+        // Бизнес-проверки FK
         userRepository.getById(review.getUserId())
                 .orElseThrow(() -> new NotFoundException("Пользователь с id = " + review.getUserId() + " не найден"));
         filmRepository.getById(review.getFilmId())
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + review.getFilmId() + " не найден"));
 
+        // В репозитории useful инициализируется 0, либо уже в БД по умолчанию
         return reviewRepository.create(review);
     }
 
-    // Обновление текста/тональности отзыва
-    public Review update(Review review) {
-        logger.debug("Запрос на обновление отзыва id={}", review.getReviewId());
-        if (review.getReviewId() == null) {
+    // Обновление отзыва: используем ReviewMapper.updateReviewFields(...)
+    @Transactional
+    public Review update(UpdateReviewRequest request) {
+        logger.debug("Запрос на обновление отзыва id={}", request.getReviewId());
+        if (request.getReviewId() == null) {
             throw new NotFoundException("Отзыв с id = null не найден");
         }
-        // убеждаемся, что отзыв существует
-        Review existing = reviewRepository.findById(review.getReviewId())
-                .orElseThrow(() -> new NotFoundException("Отзыв с id = " + review.getReviewId() + " не найден"));
 
-        // обновляем только редактируемые поля
-        if (review.getContent() != null) {
-            existing.setContent(review.getContent());
-        }
-        if (review.getIsPositive() != null) {
-            existing.setIsPositive(review.getIsPositive());
-        }
+        // Убеждаемся, что отзыв существует
+        Review existing = reviewRepository.findById(request.getReviewId())
+                .orElseThrow(() -> new NotFoundException("Отзыв с id = " + request.getReviewId() + " не найден"));
+
+        // Применяем изменения централизованно через маппер
+        ReviewMapper.updateReviewFields(existing, request);
+
         return reviewRepository.update(existing);
     }
 
     // Удаление отзыва
+    @Transactional
     public void delete(int id) {
         logger.debug("Запрос на удаление отзыва id={}", id);
         reviewRepository.findById(id)
@@ -75,11 +80,11 @@ public class ReviewService {
                 .orElseThrow(() -> new NotFoundException("Отзыв с id = " + id + " не найден"));
     }
 
-    // Получение списка отзывов по фильму (или всех), отсортировано по useful, ограничено count
+    // Получение списка отзывов по фильму, сортировка по useful DESC, ограничение count
     public List<Review> getAllByFilm(Integer filmId, int count) {
         logger.debug("Запрос на получение отзывов: filmId={}, count={}", filmId, count);
         if (filmId != null) {
-            // если фильм указан — проверим, что он существует
+            // Если фильм указан — проверка, что он существует
             filmRepository.getById(filmId)
                     .orElseThrow(() -> new NotFoundException("Фильм с id = " + filmId + " не найден"));
         }
@@ -87,6 +92,7 @@ public class ReviewService {
     }
 
     // Пользователь ставит лайк отзыву
+    @Transactional
     public void putLike(int reviewId, int userId) {
         logger.debug("Запрос на установку лайка: reviewId={}, userId={}", reviewId, userId);
         ensureReviewAndUserExist(reviewId, userId);
@@ -94,6 +100,7 @@ public class ReviewService {
     }
 
     // Пользователь ставит дизлайк отзыву
+    @Transactional
     public void putDislike(int reviewId, int userId) {
         logger.debug("Запрос на установку дизлайка: reviewId={}, userId={}", reviewId, userId);
         ensureReviewAndUserExist(reviewId, userId);
@@ -101,6 +108,7 @@ public class ReviewService {
     }
 
     // Пользователь удаляет лайк отзыву
+    @Transactional
     public void removeLike(int reviewId, int userId) {
         logger.debug("Запрос на удаление лайка: reviewId={}, userId={}", reviewId, userId);
         ensureReviewAndUserExist(reviewId, userId);
@@ -108,26 +116,11 @@ public class ReviewService {
     }
 
     // Пользователь удаляет дизлайк отзыву
+    @Transactional
     public void removeDislike(int reviewId, int userId) {
         logger.debug("Запрос на удаление дизлайка: reviewId={}, userId={}", reviewId, userId);
         ensureReviewAndUserExist(reviewId, userId);
         reviewRepository.removeDislike(reviewId, userId);
-    }
-
-    // Базовая валидация данных при создании
-    private void validateForCreate(Review r) {
-        if (r.getContent() == null || r.getContent().trim().isEmpty()) {
-            throw new IllegalArgumentException("Текст отзыва не может быть пустым");
-        }
-        if (r.getIsPositive() == null) {
-            throw new IllegalArgumentException("Поле isPositive должно быть указано");
-        }
-        if (r.getUserId() == null) {
-            throw new IllegalArgumentException("userId должен быть указан");
-        }
-        if (r.getFilmId() == null) {
-            throw new IllegalArgumentException("filmId должен быть указан");
-        }
     }
 
     // Проверка существования отзыва и пользователя
