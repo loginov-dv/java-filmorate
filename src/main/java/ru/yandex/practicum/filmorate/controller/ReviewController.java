@@ -39,9 +39,7 @@ public class ReviewController {
     @PutMapping
     public ReviewDto update(@Valid @RequestBody UpdateReviewRequest request) {
         logger.debug("Вызов эндпоинта PUT /reviews");
-        // Сервис сам подтянет существующий отзыв и применит изменения
-        Review patch = ReviewMapper.mapToReview(request);
-        Review updated = reviewService.update(patch);
+        Review updated = reviewService.update(request); // используем маппер внутри сервиса
         return ReviewMapper.mapToReviewDto(updated);
     }
 
