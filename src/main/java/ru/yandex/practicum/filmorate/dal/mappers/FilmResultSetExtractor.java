@@ -37,8 +37,6 @@ public class FilmResultSetExtractor implements ResultSetExtractor<List<Film>> {
                 mpaRating.setName(resultSet.getString("rating_name"));
                 film.setRating(mpaRating);
 
-                film.setGenres(new HashSet<>());
-                film.setDirectors(new HashSet<>());
                 filmMap.put(filmId, film);
             }
 
