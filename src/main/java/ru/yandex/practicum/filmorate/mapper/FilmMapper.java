@@ -28,29 +28,18 @@ public final class FilmMapper {
 
         dto.setMpa(film.getRating());
 
-        /*MpaIdDto mpaIdDto = new MpaIdDto();
-        mpaIdDto.setId(film.getRating().getId());
-        dto.setMpa(mpaIdDto);*/
-
-        if (film.getGenres() != null) {
+        if (!film.getGenres().isEmpty()) {
             Set<Genre> genres = film.getGenres().stream()
                     .sorted(Comparator.comparingInt(Genre::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             dto.setGenres(genres);
-            /*Set<GenreIdDto> genres = film.getGenres().stream()
-                    .map(GenreMapper::mapToGenreIdDto)
-                    .sorted(Comparator.comparingInt(GenreIdDto::getId))
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
-            dto.setGenres(genres);*/
         }
 
-        if (film.getDirectors() != null) {
+        if (!film.getDirectors().isEmpty()) {
             Set<Director> directors = film.getDirectors().stream()
                     .sorted(Comparator.comparingInt(Director::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             dto.setDirectors(directors);
-        } else {
-            dto.setDirectors(Collections.emptySet());
         }
 
         return dto;
@@ -73,7 +62,8 @@ public final class FilmMapper {
     }
 
     // Обновить поля объекта класса Film
-    public static Film updateFilmFields(Film film, UpdateFilmRequest request, Set<Director> directors) {
+    public static Film updateFilmFields(Film film, UpdateFilmRequest request,
+                                        Set<Director> directors) {
         if (request.hasName()) {
             film.setName(request.getName());
         }
