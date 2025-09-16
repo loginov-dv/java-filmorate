@@ -22,7 +22,7 @@ public final class ReviewMapper {
         return review;
     }
 
-    // Создаёт «патч» Review из запроса на обновление
+    // Создаёт патч Review из запроса на обновление
     public static Review mapToReview(UpdateReviewRequest req) {
         Review review = new Review();
         review.setReviewId(req.getReviewId());
