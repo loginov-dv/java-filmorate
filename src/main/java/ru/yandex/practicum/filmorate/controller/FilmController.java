@@ -74,11 +74,13 @@ public class FilmController {
         filmService.removeLike(id, userId);
     }
 
-    // Эндпоинт GET /films/popular/count?=count
+    // Эндпоинт GET /films/popular/
     @GetMapping("/popular")
-    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count) {
-        logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
-        return filmService.getPopular(count);
+    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count,
+                                    @RequestParam(required = false) Integer genreId,
+                                    @RequestParam(required = false) Integer year) {
+        logger.debug("Вызов эндпоинта GET /films/popular/");
+        return filmService.getPopular(count, genreId, year);
     }
 
     // Эндпоинт DELETE /films/{filmId}
