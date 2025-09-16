@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 // Film data transfer object
@@ -28,6 +29,6 @@ public class FilmDto {
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
     private MpaRating mpa;
-    private Set<Genre> genres;
-    private Set<Director> directors;
+    private Set<Genre> genres = new HashSet<>();
+    private Set<Director> directors = new HashSet<>();
 }
