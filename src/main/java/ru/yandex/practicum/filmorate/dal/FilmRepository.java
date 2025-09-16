@@ -211,9 +211,7 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
 
         List<Integer> oldDirectors = super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId());
-        List<Integer> newDirectors = film.getDirectors() == null
-                ? Collections.emptyList()
-                : film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
+        List<Integer> newDirectors = film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
 
         List<Integer> directorsToRemove = oldDirectors.stream()
                 .filter(item -> !newDirectors.contains(item))
