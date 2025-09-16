@@ -224,7 +224,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
         if (!directorsToRemove.isEmpty()) {
             String query = "DELETE FROM film_directors WHERE film_id = ? " +
-                    "AND director_id IN (" + createPlaceholders(directorsToRemove.size()) +")";
+                    "AND director_id IN (" + createPlaceholders(directorsToRemove.size()) + ")";
             List<Integer> params = new ArrayList<>();
             params.add(film.getId());
             params.addAll(directorsToRemove);
