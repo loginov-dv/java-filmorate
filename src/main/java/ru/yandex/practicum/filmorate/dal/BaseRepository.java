@@ -64,6 +64,14 @@ public class BaseRepository<T> {
         }
     }
 
+    protected void insertWithoutKey(String query, Object... params) {
+        int rowsInserted = jdbcTemplate.update(query, params);
+        if (rowsInserted == 0) {
+            logger.warn("Не было вставлено ни одной строки для запроса: {}", query);
+            throw new RuntimeException("Не удалось вставить данные");
+        }
+    }
+
     protected List<Integer> findManyInts(String query, Object... params) {
         return jdbcTemplate.query(query, (rs, rowNum) -> rs.getInt(1), params);
     }
