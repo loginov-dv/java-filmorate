@@ -1,8 +1,8 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.NewReviewRequest;
@@ -16,21 +16,19 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 // Контроллер для работы с отзывами
+@Slf4j
 @RestController
 @RequestMapping("/reviews")
+@RequiredArgsConstructor // генерирует конструктор для final-полей
 public class ReviewController {
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(ReviewController.class);
-    private final ReviewService reviewService;
 
-    public ReviewController(ReviewService reviewService) {
-        this.reviewService = reviewService;
-    }
+    // Сервис инжектится через сгенерированный Lombok-конструктор
+    private final ReviewService reviewService;
 
     // Эндпоинт POST /reviews — добавление нового отзыва (200 OK)
     @PostMapping
     public ReviewDto create(@Valid @RequestBody NewReviewRequest request) {
-        logger.debug("Вызов эндпоинта POST /reviews");
+        log.debug("Вызов эндпоинта POST /reviews");
         Review created = reviewService.create(ReviewMapper.mapToReview(request));
         return ReviewMapper.mapToReviewDto(created);
     }
@@ -38,7 +36,7 @@ public class ReviewController {
     // Эндпоинт PUT /reviews — редактирование отзыва
     @PutMapping
     public ReviewDto update(@Valid @RequestBody UpdateReviewRequest request) {
-        logger.debug("Вызов эндпоинта PUT /reviews");
+        log.debug("Вызов эндпоинта PUT /reviews");
         Review updated = reviewService.update(request); // используем маппер внутри сервиса
         return ReviewMapper.mapToReviewDto(updated);
     }
@@ -47,14 +45,14 @@ public class ReviewController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable int id) {
-        logger.debug("Вызов эндпоинта DELETE /reviews/{}", id);
+        log.debug("Вызов эндпоинта DELETE /reviews/{}", id);
         reviewService.delete(id);
     }
 
     // Эндпоинт GET /reviews/{id} — получение отзыва по id
     @GetMapping("/{id}")
     public ReviewDto getById(@PathVariable int id) {
-        logger.debug("Вызов эндпоинта GET /reviews/{}", id);
+        log.debug("Вызов эндпоинта GET /reviews/{}", id);
         return ReviewMapper.mapToReviewDto(reviewService.getById(id));
     }
 
@@ -62,7 +60,7 @@ public class ReviewController {
     @GetMapping
     public List<ReviewDto> getAll(@RequestParam(value = "filmId", required = false) Integer filmId,
                                   @RequestParam(value = "count", defaultValue = "10") int count) {
-        logger.debug("Вызов эндпоинта GET /reviews c параметрами filmId={}, count={}", filmId, count);
+        log.debug("Вызов эндпоинта GET /reviews c параметрами filmId={}, count={}", filmId, count);
         return reviewService.getAllByFilm(filmId, count).stream()
                 .map(ReviewMapper::mapToReviewDto)
                 .collect(Collectors.toList());
@@ -72,7 +70,7 @@ public class ReviewController {
     @PutMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public void putLike(@PathVariable int id, @PathVariable int userId) {
-        logger.debug("Вызов эндпоинта PUT /reviews/{}/like/{}", id, userId);
+        log.debug("Вызов эндпоинта PUT /reviews/{}/like/{}", id, userId);
         reviewService.putLike(id, userId);
     }
 
@@ -80,7 +78,7 @@ public class ReviewController {
     @PutMapping("/{id}/dislike/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public void putDislike(@PathVariable int id, @PathVariable int userId) {
-        logger.debug("Вызов эндпоинта PUT /reviews/{}/dislike/{}", id, userId);
+        log.debug("Вызов эндпоинта PUT /reviews/{}/dislike/{}", id, userId);
         reviewService.putDislike(id, userId);
     }
 
@@ -88,7 +86,7 @@ public class ReviewController {
     @DeleteMapping("/{id}/like/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public void removeLike(@PathVariable int id, @PathVariable int userId) {
-        logger.debug("Вызов эндпоинта DELETE /reviews/{}/like/{}", id, userId);
+        log.debug("Вызов эндпоинта DELETE /reviews/{}/like/{}", id, userId);
         reviewService.removeLike(id, userId);
     }
 
@@ -96,7 +94,7 @@ public class ReviewController {
     @DeleteMapping("/{id}/dislike/{userId}")
     @ResponseStatus(HttpStatus.OK)
     public void removeDislike(@PathVariable int id, @PathVariable int userId) {
-        logger.debug("Вызов эндпоинта DELETE /reviews/{}/dislike/{}", id, userId);
+        log.debug("Вызов эндпоинта DELETE /reviews/{}/dislike/{}", id, userId);
         reviewService.removeDislike(id, userId);
     }
 }
