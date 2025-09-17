@@ -1,3 +1,5 @@
+DELETE FROM review_likes;
+DELETE FROM reviews;
 DELETE FROM friendships;
 DELETE FROM film_likes;
 DELETE FROM film_genres;
@@ -8,6 +10,8 @@ DELETE FROM genres;
 DELETE FROM ratings;
 DELETE FROM directors;
 
+ALTER TABLE review_likes ALTER COLUMN id RESTART WITH 1;
+ALTER TABLE reviews ALTER COLUMN review_id RESTART WITH 1;
 ALTER TABLE friendships ALTER COLUMN id RESTART WITH 1;
 ALTER TABLE film_likes ALTER COLUMN id RESTART WITH 1;
 ALTER TABLE film_genres ALTER COLUMN id RESTART WITH 1;
