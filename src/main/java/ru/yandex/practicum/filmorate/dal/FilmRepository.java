@@ -20,8 +20,6 @@ import java.util.stream.Collectors;
 // Класс-репозиторий для работы с таблицей "films"
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
-    // Наименование таблицы
-    private static final String TABLE_NAME = "films";
     // Запросы
     private static final String FIND_ALL_QUERY = """
             SELECT
@@ -63,12 +61,10 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
             LEFT JOIN directors AS d ON fd.director_id = d.director_id
             WHERE f.film_id = ?""";
-    private static final String INSERT_FILM_QUERY = "INSERT INTO " + TABLE_NAME +
+    private static final String INSERT_FILM_QUERY = "INSERT INTO films" +
             "(name, description, release_date, duration, rating_id) " +
             "VALUES(?, ?, ?, ?, ?)";
-    private static final String INSERT_FILM_GENRE_QUERY = "INSERT INTO film_genres(film_id, genre_id) " +
-            "VALUES(?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
+    private static final String UPDATE_QUERY = "UPDATE films " +
             "SET name = ?, description = ?, release_date = ?, duration = ? WHERE film_id = ?";
     private static final String INSERT_FILM_LIKES_QUERY = "INSERT INTO film_likes(film_id, user_id) " +
             "VALUES(?, ?)";
@@ -99,8 +95,6 @@ public class FilmRepository extends BaseRepository<Film> {
             LIMIT ?
             """;
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
-    private static final String INSERT_FILM_DIRECTOR_QUERY = "INSERT INTO film_directors(film_id, director_id) " +
-            "VALUES(?, ?)";
     private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
             "WHERE film_id = ?";
     private static final String GET_DIRECTORS_FILMS_ORDERED_BY_YEAR = """
@@ -184,16 +178,24 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Получен новый id = {}", id);
         film.setId(id);
 
-        for (Genre genre : film.getGenres()) {
-            insert(INSERT_FILM_GENRE_QUERY, film.getId(), genre.getId());
-            logger.debug("Добавлена строка в таблицу film_genres: film_id = {}, genre_id = {}",
-                    film.getId(), genre.getId());
+        if (!film.getGenres().isEmpty()) {
+            List<String> genreValues = film.getGenres().stream()
+                    .map(genre -> "(" + film.getId() + ", " + genre.getId() + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_genres(film_id, genre_id) VALUES "
+                    + String.join(", ", genreValues));
+            logger.debug("Добавлены строки в таблицу film_genres: film_id = {}, genre_id = {}",
+                    film.getId(), film.getGenres().stream().map(Genre::getId).toList());
         }
 
-        for (Director director : film.getDirectors()) {
-            insert(INSERT_FILM_DIRECTOR_QUERY, film.getId(), director.getId());
-            logger.debug("Добавлена строка в таблицу film_directors: film_id = {}, director_id = {}",
-                    film.getId(), director.getId());
+        if (!film.getDirectors().isEmpty()) {
+            List<String> directorValues = film.getDirectors().stream()
+                    .map(director -> "(" + film.getId() + ", " + director.getId() + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_directors(film_id, director_id) VALUES "
+                    + String.join(", ", directorValues));
+            logger.debug("Добавлены строки в таблицу film_genres: film_id = {}, genre_id = {}",
+                    film.getId(), film.getDirectors().stream().map(Director::getId).toList());
         }
 
         logger.debug("Добавлена строка в таблицу films с id = {}", id);
@@ -233,11 +235,11 @@ public class FilmRepository extends BaseRepository<Film> {
         }
 
         if (!directorsToAdd.isEmpty()) {
-            String query = "INSERT INTO film_directors(film_id, director_id) VALUES(?, ?)";
-
-            for (Integer directorId : directorsToAdd) {
-                insert(query, film.getId(), directorId);
-            }
+            List<String> directorValues = directorsToAdd.stream()
+                    .map(directorId -> "(" + film.getId() + ", " + directorId + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_directors(film_id, director_id) VALUES "
+                    + String.join(", ", directorValues));
 
             logger.debug("Добавлены строки в таблицу film_directors, где film_id = {} и directors_id = {}",
                     film.getId(), directorsToAdd);
