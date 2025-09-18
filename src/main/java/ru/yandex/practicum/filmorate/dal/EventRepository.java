@@ -26,6 +26,7 @@ public class EventRepository extends BaseRepository<Event> {
                 operation
             FROM events
             WHERE user_id = ?
+            ORDER BY timestamp ASC
             """;
 
     @Autowired
