@@ -60,7 +60,6 @@ public class FilmController {
         return filmService.update(request);
     }
 
-
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
     public void putLike(@PathVariable int id,
@@ -93,7 +92,14 @@ public class FilmController {
             logger.warn("Переданный параметр сортировки sortBy = {} не поддерживается", sortBy);
             throw new ValidationException("Переданный параметр сортировки sortBy = " + sortBy + " не поддерживается");
         }
-
         return filmService.search(directorId, sortBy);
+    }
+
+    // Эндпоинт GET /films/search?query=...&by=director,title — поиск по подстроке, сортировка по популярности
+    @GetMapping("/search")
+    public List<FilmDto> search(@RequestParam String query,
+                                @RequestParam String by) {
+        logger.debug("Вызов эндпоинта GET /films/search");
+        return filmService.search(query, by);
     }
 }
