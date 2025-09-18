@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.GenreIdDto;
@@ -76,6 +77,7 @@ public class FilmService {
     }
 
     // Создать новый фильм
+    @Transactional
     public FilmDto create(NewFilmRequest request) {
         logger.debug("Запрос на создания нового фильма");
         logger.debug("Входные данные: {}", request);
@@ -111,6 +113,7 @@ public class FilmService {
     }
 
     // Изменить фильм
+    @Transactional
     public FilmDto update(UpdateFilmRequest request) {
         logger.debug("Запрос на изменение фильма с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
@@ -132,6 +135,7 @@ public class FilmService {
 
 
     // Поставить лайк
+    @Transactional
     public void putLike(int filmId, int userId) {
         logger.debug("Запрос на добавление лайка фильма с id = {} от пользователя с id = {}",
                 filmId, userId);
@@ -159,6 +163,7 @@ public class FilmService {
     }
 
     // Удалить лайк
+    @Transactional
     public void removeLike(int filmId, int userId) {
         logger.debug("Запрос на удаление лайка фильма с id = {} от пользователя с id = {}",
                 filmId, userId);
