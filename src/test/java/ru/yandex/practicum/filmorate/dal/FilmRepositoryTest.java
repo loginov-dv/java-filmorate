@@ -8,6 +8,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.jdbc.JdbcTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.jdbc.Sql;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
@@ -36,6 +37,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class FilmRepositoryTest {
     private final FilmRepository filmRepository;
     private final GenreRepository genreRepository;
+
+    @Autowired
+    private JdbcTemplate jdbc;
 
     @Test
     void shouldFindFilmById() {
@@ -157,5 +161,103 @@ class FilmRepositoryTest {
         assertIterableEquals(List.of(2, 3, 4), popular.stream()
                 .map(Film::getId)
                 .collect(Collectors.toList()));
+    }
+
+    private int filmIdByName(String name) {
+        return jdbc.queryForObject("SELECT film_id FROM films WHERE name = ?", Integer.class, name);
+    }
+
+    @Test
+    void repo_searchByTitle_sortedByLikes() {
+        // уникальный префикс, чтобы гарантированно матчились только наши фильмы
+        String p = "repocro_";
+
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                p + "A", "d", "2000-01-01", 100);
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                p + "B", "d", "2001-01-01", 100);
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                p + "C", "d", "2002-01-01", 100);
+
+        int aId = filmIdByName(p + "A");
+        int bId = filmIdByName(p + "B");
+        int cId = filmIdByName(p + "C");
+
+        // лайки: A=2, B=1, C=0
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", aId, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", aId, 2);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", bId, 1);
+
+        List<Film> list = filmRepository.searchByTitleAndOrDirector("%repocro_%", true, false);
+        // забираем только наши (на случай, если кто-то ещё совпадёт)
+        List<Film> ours = list.stream().filter(f -> f.getName().startsWith(p)).toList();
+
+        assertThat(ours).extracting(Film::getName)
+                .containsExactly(p + "A", p + "B", p + "C");
+    }
+
+    @Test
+    void repo_searchByDirector_onlyMatches_sortedByLikes() {
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                "RD_X1", "d", "2003-01-01", 100);
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                "RD_X2", "d", "2004-01-01", 100);
+
+        int id1 = filmIdByName("RD_X1");
+        int id2 = filmIdByName("RD_X2");
+
+        jdbc.update("INSERT INTO directors(name) VALUES (?)", "RepoDir Alpha repodir");
+        int dirId = jdbc.queryForObject("SELECT director_id FROM directors WHERE name = ?", Integer.class, "RepoDir Alpha repodir");
+        jdbc.update("INSERT INTO film_directors(film_id, director_id) VALUES (?,?)", id1, dirId);
+        jdbc.update("INSERT INTO film_directors(film_id, director_id) VALUES (?,?)", id2, dirId);
+
+        // лайки: id1=1, id2=0
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", id1, 1);
+
+        List<Film> list = filmRepository.searchByTitleAndOrDirector("%repodir%", false, true);
+        List<String> names = list.stream().map(Film::getName).filter(n -> n.startsWith("RD_")).toList();
+
+        assertThat(names).containsExactly("RD_X1", "RD_X2");
+    }
+
+    @Test
+    void repo_searchByDirectorOrTitle_noDuplicates_andOrder() {
+        // 3 фильма под 'repocmb'
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                "repocmb_both", "d", "2005-01-01", 100);
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                "repocmb_title_only", "d", "2006-01-01", 100);
+        jdbc.update("INSERT INTO films(name, description, release_date, duration, rating_id) VALUES (?,?,?,?,1)",
+                "Other_for_repocmb", "d", "2007-01-01", 100);
+
+        int idBoth = filmIdByName("repocmb_both");
+        int idTitle = filmIdByName("repocmb_title_only");
+        int idDir = filmIdByName("Other_for_repocmb");
+
+        // режиссёры: у двух из них имя содержит 'repocmb'
+        jdbc.update("INSERT INTO directors(name) VALUES (?)", "repocmb Director One");
+        int d1 = jdbc.queryForObject("SELECT director_id FROM directors WHERE name = ?", Integer.class, "repocmb Director One");
+        jdbc.update("INSERT INTO film_directors(film_id, director_id) VALUES (?,?)", idBoth, d1);
+        jdbc.update("INSERT INTO film_directors(film_id, director_id) VALUES (?,?)", idDir, d1);
+
+        // лайки: both=3, title=2, dir=1
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 2);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 3);
+
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idTitle, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idTitle, 2);
+
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idDir, 1);
+
+        List<Film> list = filmRepository.searchByTitleAndOrDirector("%repocmb%", true, true);
+        List<Film> ours = list.stream().filter(f ->
+                f.getName().equals("repocmb_both")
+                        || f.getName().equals("repocmb_title_only")
+                        || f.getName().equals("Other_for_repocmb")
+        ).toList();
+
+        assertThat(ours).extracting(Film::getName)
+                .containsExactly("repocmb_both", "repocmb_title_only", "Other_for_repocmb");
     }
 }
