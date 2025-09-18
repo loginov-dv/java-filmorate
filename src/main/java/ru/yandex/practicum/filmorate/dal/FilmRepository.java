@@ -144,6 +144,37 @@ public class FilmRepository extends BaseRepository<Film> {
             GROUP BY film_id, genre_id, director_id
             ORDER BY COUNT(fl.user_id) DESC
             """;
+
+    private static final String SEARCH_BY_TITLE_OR_DIRECTOR_QUERY = """
+            WITH likes AS (
+                SELECT film_id, COUNT(*) AS cnt
+                FROM film_likes
+                GROUP BY film_id
+            )
+            SELECT
+                f.film_id           AS film_id,
+                f.name              AS film_name,
+                f.description       AS film_description,
+                f.release_date      AS film_release_date,
+                f.duration          AS film_duration,
+                r.rating_id         AS rating_id,
+                r.name              AS rating_name,
+                g.genre_id          AS genre_id,
+                g.name              AS genre_name,
+                d.director_id       AS director_id,
+                d.name              AS director_name,
+                COALESCE(l.cnt, 0)  AS likes_cnt
+            FROM films AS f
+            LEFT JOIN ratings AS r         ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg    ON f.film_id  = fg.film_id
+            LEFT JOIN genres AS g          ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors AS fd ON f.film_id  = fd.film_id
+            LEFT JOIN directors AS d       ON fd.director_id = d.director_id
+            LEFT JOIN likes AS l           ON l.film_id  = f.film_id
+            WHERE ( :titleCond ) OR ( :directorCond )
+            ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
+            """;
+
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -278,6 +309,33 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Film> searchDirectorsFilmsSortedByLikes(int directorId) {
         logger.debug("Запрос на получение всех фильмов режиссёра с id = {}, отсортированных по лайкам", directorId);
         return findMany(GET_DIRECTORS_FILMS_ORDERED_BY_LIKES, filmResultSetExtractor, directorId);
+    }
+
+    // Сортировка по популярности, фильмы с 0 лайков не теряются.
+    public List<Film> searchByTitleAndOrDirector(String like, boolean byTitle, boolean byDirector) {
+        logger.debug("Поиск фильмов: like='{}', byTitle={}, byDirector={}", like, byTitle, byDirector);
+
+        String titleCond = byTitle ? "LOWER(f.name) LIKE ?" : "1=0";
+        String directorCond = byDirector
+                ? "EXISTS (SELECT 1 FROM film_directors fdx " +
+                "JOIN directors dx ON dx.director_id = fdx.director_id " +
+                "WHERE fdx.film_id = f.film_id AND LOWER(dx.name) LIKE ?)"
+                : "1=0";
+
+        String sql = SEARCH_BY_TITLE_OR_DIRECTOR_QUERY
+                .replace(":titleCond", titleCond)
+                .replace(":directorCond", directorCond);
+
+        Object[] params;
+        if (byTitle && byDirector) {
+            params = new Object[]{ like, like };
+        } else if (byTitle) {
+            params = new Object[]{ like };
+        } else {
+            params = new Object[]{ like };
+        }
+
+        return findMany(sql, filmResultSetExtractor, params);
     }
 
     private String createPlaceholders(int count) {
