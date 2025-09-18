@@ -24,6 +24,8 @@ public class FilmService {
     private final FilmRepository filmRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmService.class);
+    // Допустимые значения параметра "by" для поиска
+    private static final Set<String> ALLOWED_SEARCH_BY = Set.of("title", "director");
     // Репозиторий рейтингов
     private final MpaRepository mpaRepository;
     // Репозиторий жанров
@@ -223,17 +225,9 @@ public class FilmService {
             throw new ValidationException("Параметр by обязателен и не может быть пустым");
         }
 
-        // Допустимые значения
-        final Set<String> allowed = Set.of("title", "director");
-        Set<String> bySet = Arrays.stream(by.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .map(String::toLowerCase)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
-
-        if (bySet.isEmpty() || !allowed.containsAll(bySet)) {
-            throw new ValidationException("Параметр by должен быть 'title', 'director' или 'director,title'");
-        }
+        // Разбор и валидация параметра "by"
+        Set<String> bySet = parseBy(by);
+        validateBy(bySet);
 
         boolean byTitle = bySet.contains("title");
         boolean byDirector = bySet.contains("director");
@@ -244,5 +238,21 @@ public class FilmService {
 
         logger.info("Найдено фильмов по поиску: {}", films.size());
         return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+    // Разбор и нормализация значения by
+    private Set<String> parseBy(String by) {
+        return Arrays.stream(by.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(String::toLowerCase)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    // Валидация нормализованного множества значений
+    private void validateBy(Set<String> bySet) {
+        if (bySet.isEmpty() || !ALLOWED_SEARCH_BY.containsAll(bySet)) {
+            throw new ValidationException("Параметр by должен быть 'title', 'director' или 'director,title'");
+        }
     }
 }
