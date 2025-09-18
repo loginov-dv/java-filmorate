@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.EventRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
 import ru.yandex.practicum.filmorate.dto.EventDto;
@@ -63,6 +64,7 @@ public class UserService {
     }
 
     // Создать нового пользователя
+    @Transactional
     public UserDto create(NewUserRequest request) {
         logger.debug("Запрос на создания нового пользователя");
         logger.debug("Входные данные: {}", request);
@@ -83,6 +85,7 @@ public class UserService {
     }
 
     // Изменить пользователя
+    @Transactional
     public UserDto update(UpdateUserRequest request) {
         logger.debug("Запрос на изменение пользователя с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
@@ -116,6 +119,7 @@ public class UserService {
     }
 
     // Добавить дружескую связь между пользователями
+    @Transactional
     public void addFriend(int userId, int friendId) {
         logger.debug("Запрос на добавление пользователя с id = {} в друзья пользователя с id = {}",
                 friendId, userId);
@@ -146,6 +150,7 @@ public class UserService {
     }
 
     // Удалить дружескую связь между пользователями
+    @Transactional
     public void removeFriend(int userId, int friendId) {
         logger.debug("Запрос на удаления пользователя с id = {} из друзей пользователя с id = {}",
                 friendId, userId);
