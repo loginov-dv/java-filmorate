@@ -40,8 +40,8 @@ public class EventRepository extends BaseRepository<Event> {
                 event.getUserId(),
                 Timestamp.from(event.getTimestamp()),
                 event.getEntityId(),
-                event.getEventType(),
-                event.getOperation()
+                event.getEventType().name(),
+                event.getOperation().name()
         );
         log.debug("Добавлена строка в таблицу event");
     }
