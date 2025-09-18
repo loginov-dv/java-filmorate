@@ -10,16 +10,19 @@ import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
+import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
 
 // Контроллер для работы с фильмами
 @RestController
-@RequestMapping(value = "/films", produces = "application/json;charset=UTF-8")
+@RequestMapping("/films")
 public class FilmController {
     // Сервис работы с фильмами
     private final FilmService filmService;
+    // Параметры сортировки
+    private final List<String> sortParameters = List.of("year", "likes");
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
 
@@ -57,6 +60,7 @@ public class FilmController {
         return filmService.update(request);
     }
 
+
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
     public void putLike(@PathVariable int id,
@@ -73,18 +77,23 @@ public class FilmController {
         filmService.removeLike(id, userId);
     }
 
-    // Эндпоинт GET /films/popular/count?=count
+    // Эндпоинт GET /films/popular/?count=count
     @GetMapping("/popular")
     public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count) {
-        logger.debug("Вызов эндпоинта GET /films/popular/count?=count");
+        logger.debug("Вызов эндпоинта GET /films/popular/?count=count");
         return filmService.getPopular(count);
     }
 
-    // Эндпоинт GET /films/search?query=...&by=...
-    @GetMapping("/search")
-    public List<FilmDto> search(@RequestParam String query,
-                                @RequestParam(name = "by", defaultValue = "title") String by) {
-        logger.debug("Вызов эндпоинта GET /films/search");
-        return filmService.search(query, by);
+    // Эндпоинт GET /films/director/{directorId}?sortBy=[year,likes]
+    @GetMapping("/director/{directorId}")
+    public List<FilmDto> getDirectorsFilm(@PathVariable int directorId,
+                                          @RequestParam String sortBy) {
+        logger.debug("Вызов эндпоинта GET /films/director/{directorId}?sortBy=[year,likes]");
+        if (!sortParameters.contains(sortBy)) {
+            logger.warn("Переданный параметр сортировки sortBy = {} не поддерживается", sortBy);
+            throw new ValidationException("Переданный параметр сортировки sortBy = " + sortBy + " не поддерживается");
+        }
+
+        return filmService.search(directorId, sortBy);
     }
 }
