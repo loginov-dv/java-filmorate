@@ -4,10 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.MpaRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.GenreIdDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
@@ -18,6 +15,9 @@ import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.events.Event;
+import ru.yandex.practicum.filmorate.model.events.EventType;
+import ru.yandex.practicum.filmorate.model.events.Operation;
 
 import java.util.HashSet;
 import java.util.List;
@@ -38,14 +38,18 @@ public class FilmService {
     private final GenreRepository genreRepository;
     // Репозиторий пользователей
     private final UserRepository userRepository;
+    // Репозиторий событий
+    private final EventRepository eventRepository;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserRepository userRepository) {
+                       MpaRepository mpaRepository, UserRepository userRepository,
+                       EventRepository eventRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
     }
 
     // Вернуть все фильмы
@@ -111,7 +115,6 @@ public class FilmService {
         logger.debug("Запрос на изменение фильма с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
 
-        // TODO: mpa & genres?
         Optional<Film> maybeFilm = filmRepository.getById(request.getId());
 
         if (maybeFilm.isEmpty()) {
@@ -151,6 +154,8 @@ public class FilmService {
 
         filmRepository.putLike(filmId, userId);
         logger.info("Пользователь с id = {} поставил лайк фильму с id = {}", userId, filmId);
+
+        eventRepository.create(new Event(userId, filmId, EventType.LIKE, Operation.ADD));
     }
 
     // Удалить лайк
@@ -170,6 +175,8 @@ public class FilmService {
 
         filmRepository.removeLike(filmId, userId);
         logger.info("Пользователь с id = {} убрал лайк у фильма с id = {}", userId, filmId);
+
+        eventRepository.create(new Event(userId, filmId, EventType.LIKE, Operation.REMOVE));
     }
 
     // Полуить список из первых count фильмов по количеству лайков
