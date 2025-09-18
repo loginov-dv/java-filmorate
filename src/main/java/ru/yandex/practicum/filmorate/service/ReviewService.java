@@ -41,10 +41,12 @@ public class ReviewService {
         filmRepository.getById(review.getFilmId())
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + review.getFilmId() + " не найден"));
 
-        eventRepository.create(new Event(review.getUserId(), review.getReviewId(),
+        Review newReview = reviewRepository.create(review);
+
+        eventRepository.create(new Event(newReview.getUserId(), newReview.getReviewId(),
                 EventType.REVIEW, Operation.ADD));
 
-        return reviewRepository.create(review);
+        return newReview;
     }
 
     // Обновление отзыва
