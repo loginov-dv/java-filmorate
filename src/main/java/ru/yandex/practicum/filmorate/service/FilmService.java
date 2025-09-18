@@ -4,17 +4,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.MpaRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
-import ru.yandex.practicum.filmorate.dto.GenreIdDto;
-import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
-import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
+import ru.yandex.practicum.filmorate.dal.*;
+import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
@@ -38,14 +33,18 @@ public class FilmService {
     private final GenreRepository genreRepository;
     // Репозиторий пользователей
     private final UserRepository userRepository;
+    // Репозиторий режиссёров
+    private final DirectorRepository directorRepository;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
-                       MpaRepository mpaRepository, UserRepository userRepository) {
+                       MpaRepository mpaRepository, UserRepository userRepository,
+                       DirectorRepository directorRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.userRepository = userRepository;
+        this.directorRepository = directorRepository;
     }
 
     // Вернуть все фильмы
@@ -99,7 +98,21 @@ public class FilmService {
             }
         }
 
-        Film film = FilmMapper.mapToFilm(request, mpaRating, genres);
+        Set<Director> directors = new HashSet<>();
+        if (request.getDirectors() != null) {
+            for (DirectorIdDto directorIdDto : request.getDirectors()) {
+                Optional<Director> maybeDirector = directorRepository.getById(directorIdDto.getId());
+
+                if (maybeDirector.isEmpty()) {
+                    logger.warn("Режиссёр с id = {} не найден", directorIdDto.getId());
+                    throw new NotFoundException("Режиссёр с id = " + directorIdDto.getId() + " не найден");
+                }
+
+                directors.add(maybeDirector.get());
+            }
+        }
+
+        Film film = FilmMapper.mapToFilm(request, mpaRating, genres, directors);
         filmRepository.create(film);
 
         logger.info("Создан фильм: {}", film);
@@ -111,7 +124,6 @@ public class FilmService {
         logger.debug("Запрос на изменение фильма с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
 
-        // TODO: mpa & genres?
         Optional<Film> maybeFilm = filmRepository.getById(request.getId());
 
         if (maybeFilm.isEmpty()) {
@@ -119,8 +131,22 @@ public class FilmService {
             throw new NotFoundException("Фильм с id = " + request.getId() + " не найден");
         }
 
+        Set<Director> directors = new HashSet<>();
+        if (request.hasDirectors()) {
+            for (DirectorIdDto directorIdDto : request.getDirectors()) {
+                Optional<Director> maybeDirector = directorRepository.getById(directorIdDto.getId());
+
+                if (maybeDirector.isEmpty()) {
+                    logger.warn("Режиссёр с id = {} не найден", directorIdDto.getId());
+                    throw new NotFoundException("Режиссёр с id = " + directorIdDto.getId() + " не найден");
+                }
+
+                directors.add(maybeDirector.get());
+            }
+        }
+
         logger.debug("Исходное состояние: {}", maybeFilm.get());
-        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request);
+        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request, directors);
         updatedFilm = filmRepository.update(updatedFilm);
 
         logger.info("Изменён фильм: {}", updatedFilm);
@@ -187,6 +213,32 @@ public class FilmService {
                 .map(Film::getId)
                 .collect(Collectors.toList()));
         return popular.stream()
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> search(int directorId, String sortBy) {
+        Optional<Director> maybeDirector = directorRepository.getById(directorId);
+
+        if (maybeDirector.isEmpty()) {
+            logger.warn("Режиссёр с id = {} не найден", directorId);
+            throw new NotFoundException("Режиссёр с id = " + directorId + " не найден");
+        }
+
+        List<Film> searchResult;
+        if (sortBy.equals("year")) {
+            searchResult = filmRepository.searchDirectorsFilmsSortedByYear(directorId);
+        } else if (sortBy.equals("likes")) {
+            searchResult = filmRepository.searchDirectorsFilmsSortedByLikes(directorId);
+        } else {
+            logger.warn("Переданный параметр сортировки sortBy = {} не поддерживается", sortBy);
+            throw new NotFoundException("Переданный параметр сортировки sortBy = " + sortBy + " не поддерживается");
+        }
+
+        logger.info("Найденные фильмы: {}", searchResult.stream()
+                .map(Film::getId)
+                .collect(Collectors.toList()));
+        return searchResult.stream()
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
