@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.service;
 
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,8 @@ public class FilmService {
     private final UserRepository userRepository;
     // Репозиторий режиссёров
     private final DirectorRepository directorRepository;
+
+    private static final int MIN_RELEASE_YEAR = 1895;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
@@ -169,6 +172,7 @@ public class FilmService {
     }
 
     // Удалить лайк
+    @Transactional
     public void removeLike(int filmId, int userId) {
         logger.debug("Запрос на удаление лайка фильма с id = {} от пользователя с id = {}", filmId, userId);
 
@@ -185,19 +189,44 @@ public class FilmService {
         logger.info("Пользователь с id = {} убрал лайк у фильма с id = {}", userId, filmId);
     }
 
-    // Получить список из первых count фильмов по количеству лайков
+    // Облегчённая версия для старого эндпоинта /films/popular
     public List<FilmDto> getPopular(int count) {
-        logger.debug("Запрос на получение первых {} популярных фильмов", count);
+        return getPopular(count, null, null);
+    }
+
+    // Получить список из первых count фильмов по количеству лайков с фильтрами
+    public List<FilmDto> getPopular(int count, Integer genreId, Integer year) {
+        logger.debug("Запрос на получение популярных фильмов: count={}, genreId={}, year={}",
+                count, genreId, year);
 
         if (count <= 0) {
             logger.warn("Количество фильмов должно быть положительным числом");
             throw new ValidationException("Количество фильмов должно быть положительным числом");
         }
 
-        List<Film> popular = filmRepository.getPopular(count);
+        if (genreId != null && genreId < 1) {
+            logger.warn("ID жанра должен быть положительным");
+            throw new ValidationException("ID жанра должен быть положительным");
+        }
+        if (year != null && year < MIN_RELEASE_YEAR) {
+            logger.warn("Год должен быть не ранее {}", MIN_RELEASE_YEAR);
+            throw new ValidationException("Год должен быть не ранее " + MIN_RELEASE_YEAR);
+        }
+        if (genreId != null && genreRepository.getById(genreId).isEmpty()) {
+            logger.warn("Жанр с id {} не найден", genreId);
+            throw new ValidationException("Жанр с id " + genreId + " не найден");
+        }
+
+        // Репозиторий сам применяет фильтры (если они заданы) и сортирует по лайкам
+        List<Film> popular = filmRepository.getPopular(count, genreId, year);
         logger.info("Популярные фильмы: {}", popular.stream().map(Film::getId).collect(Collectors.toList()));
 
         return popular.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+    // Удалить фильм по id
+    public void removeFilmById(int filmId) {
+        filmRepository.removeFilmById(filmId);
     }
 
     // Поиск фильмов режиссёра

@@ -201,4 +201,8 @@ public class UserService {
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
     }
+
+    public void removeUserById(int userId) {
+        userRepository.removeUserById(userId);
+    }
 }

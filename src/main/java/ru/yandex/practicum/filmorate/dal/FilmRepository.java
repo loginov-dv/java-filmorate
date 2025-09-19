@@ -70,31 +70,44 @@ public class FilmRepository extends BaseRepository<Film> {
             "VALUES(?, ?)";
     private static final String DELETE_FROM_FILM_LIKES_QUERY = "DELETE FROM film_likes " +
             "WHERE film_id = ? AND user_id = ?";
-    private static final String GET_POPULAR_QUERY = """
+    private static final String GET_POPULAR_WITH_FILTERS_QUERY = """
+            WITH popular AS (
+              SELECT
+                f.film_id,
+                COUNT(fl.user_id) AS likes
+              FROM films f
+              LEFT JOIN film_likes fl ON f.film_id = fl.film_id
+              LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+              WHERE ( ? IS NULL OR fg.genre_id = ? )
+                AND ( ? IS NULL OR EXTRACT(YEAR FROM f.release_date) = ? )
+              GROUP BY f.film_id
+              ORDER BY likes DESC
+              LIMIT ?
+            )
             SELECT
-                f.film_id AS film_id,
-                f.name AS film_name,
-                f.description AS film_description,
-                f.release_date AS film_release_date,
-                f.duration AS film_duration,
-                r.rating_id AS rating_id,
-                r.name AS rating_name,
-                g.genre_id AS genre_id,
-                g.name AS genre_name,
-                d.director_id AS director_id,
-                d.name AS director_name
-            FROM films AS f
-            JOIN film_likes AS fl ON f.film_id = fl.film_id
-            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
-            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
-            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
-            LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
-            LEFT JOIN directors AS d ON fd.director_id = d.director_id
-            GROUP BY film_id, genre_id, director_id
-            ORDER BY COUNT(fl.user_id) DESC
-            LIMIT ?
+              f.film_id AS film_id,
+              f.name AS film_name,
+              f.description AS film_description,
+              f.release_date AS film_release_date,
+              f.duration AS film_duration,
+              r.rating_id AS rating_id,
+              r.name AS rating_name,
+              g.genre_id AS genre_id,
+              g.name AS genre_name,
+              p.likes AS likes_count
+            FROM films f
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            JOIN popular p ON f.film_id = p.film_id
+            ORDER BY p.likes DESC
             """;
+
+
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+
+    private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE film_id = ?";
+
     private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
             "WHERE film_id = ?";
     private static final String GET_DIRECTORS_FILMS_ORDERED_BY_YEAR = """
@@ -281,7 +294,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public void putLike(int filmId, int userId) {
         logger.debug("Запрос на вставку строки в таблицу film_likes");
-        insert(INSERT_FILM_LIKES_QUERY, filmId, userId);
+        insertWithoutKey(INSERT_FILM_LIKES_QUERY, filmId, userId);
         logger.debug("Добавлена строка в таблицу film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
@@ -291,14 +304,27 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Удалена строка из таблицы film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        logger.debug("Запрос на получение первых {} популярных фильмов с фильтрами", count);
+        return findMany(GET_POPULAR_WITH_FILTERS_QUERY, filmResultSetExtractor,
+                genreId, genreId, year, year, count);
+    }
+
     public List<Film> getPopular(int count) {
         logger.debug("Запрос на получение первых {} популярных фильмов", count);
-        return findMany(GET_POPULAR_QUERY, filmResultSetExtractor, count);
+        return findMany(GET_POPULAR_WITH_FILTERS_QUERY, filmResultSetExtractor,
+                null, null, null, null, count);
     }
 
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    public void removeFilmById(int filmId) {
+        logger.debug("Запрос на удаление фильма из таблицы films для film_id = {}", filmId);
+        update(DELETE_FILM_QUERY, filmId);
+        logger.debug("Удалена строка из таблицы films: film_id = {}", filmId);
     }
 
     public List<Film> searchDirectorsFilmsSortedByYear(int directorId) {
