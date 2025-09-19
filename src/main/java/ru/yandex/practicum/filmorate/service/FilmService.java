@@ -186,13 +186,16 @@ public class FilmService {
         }
 
         if (genreId != null && genreId < 1) {
+            logger.warn("ID жанра должен быть положительным");
             throw new ValidationException("ID жанра должен быть положительным");
         }
         if (year != null && year < MIN_RELEASE_YEAR) {
+            logger.warn("Год должен быть не ранее {}", MIN_RELEASE_YEAR);
             throw new ValidationException("Год должен быть не ранее " + MIN_RELEASE_YEAR);
         }
 
         if (genreId != null && genreRepository.getById(genreId).isEmpty()) {
+            logger.warn("Жанр с id {} не найден", genreId);
             throw new ValidationException("Жанр с id " + genreId + " не найден");
         }
 
