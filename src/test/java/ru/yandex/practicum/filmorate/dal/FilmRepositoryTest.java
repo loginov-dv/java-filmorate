@@ -28,10 +28,10 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @JdbcTest
 @AutoConfigureTestDatabase
-@Sql(scripts = { "/schema.sql", "/data.sql", "/test-data.sql" })
+@Sql(scripts = {"/schema.sql", "/data.sql", "/test-data.sql"})
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
-@ContextConfiguration(classes = { FilmRowMapper.class, FilmRepository.class,
-        GenreRowMapper.class, GenreRepository.class, FilmResultSetExtractor.class })
+@ContextConfiguration(classes = {FilmRowMapper.class, FilmRepository.class,
+        GenreRowMapper.class, GenreRepository.class, FilmResultSetExtractor.class})
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class FilmRepositoryTest {
     private final FilmRepository filmRepository;
@@ -157,5 +157,116 @@ class FilmRepositoryTest {
         assertIterableEquals(List.of(2, 3, 4), popular.stream()
                 .map(Film::getId)
                 .collect(Collectors.toList()));
+    }
+
+    @Test
+    void shouldRemoveFilmById() {
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+
+        Genre genre = new Genre();
+        genre.setId(1);
+
+        Film newFilm = new Film();
+        newFilm.setName("new");
+        newFilm.setDescription("new");
+        newFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
+        newFilm.setDuration(120);
+        newFilm.setRating(mpa);
+        newFilm.setGenres(Set.of(genre));
+
+        filmRepository.create(newFilm);
+        filmRepository.removeFilmById(1);
+        assertThat(filmRepository.getById(1)).isEmpty();
+    }
+
+    @Test
+    void shouldGetPopularWithGenre() {
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+
+        Genre genre1 = new Genre();
+        genre1.setId(1);
+
+        Film filmWithGenre = new Film();
+        filmWithGenre.setName("genre-film");
+        filmWithGenre.setDescription("genre-film");
+        filmWithGenre.setReleaseDate(LocalDate.of(1995, 5, 5));
+        filmWithGenre.setDuration(100);
+        filmWithGenre.setRating(mpa);
+        filmWithGenre.setGenres(Set.of(genre1));
+
+        Film created = filmRepository.create(filmWithGenre);
+        filmRepository.putLike(created.getId(), 1);
+
+        Genre genre2 = new Genre();
+        genre2.setId(2);
+
+        Film other = new Film();
+        other.setName("other-film");
+        other.setDescription("other-film");
+        other.setReleaseDate(LocalDate.of(1995, 5, 5));
+        other.setDuration(100);
+        other.setRating(mpa);
+        other.setGenres(Set.of(genre2));
+
+        Film otherCreated = filmRepository.create(other);
+        filmRepository.putLike(otherCreated.getId(), 1);
+        filmRepository.putLike(otherCreated.getId(), 2);
+        filmRepository.putLike(otherCreated.getId(), 3);
+
+        List<Film> popular = filmRepository.getPopular(10, genre1.getId(), null);
+
+        assertThat(popular.stream().map(Film::getId)).contains(created.getId());
+        assertThat(popular.stream().map(Film::getId)).doesNotContainNull();
+    }
+
+    @Test
+    void shouldGetPopularWithGenreAndYear() {
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+
+        Genre genre3 = new Genre();
+        genre3.setId(3);
+
+        Film filmGY = new Film();
+        filmGY.setName("genre-year-film");
+        filmGY.setDescription("genre-year-film");
+        filmGY.setReleaseDate(LocalDate.of(1988, 7, 7));
+        filmGY.setDuration(90);
+        filmGY.setRating(mpa);
+        filmGY.setGenres(Set.of(genre3));
+
+        Film created = filmRepository.create(filmGY);
+        filmRepository.putLike(created.getId(), 1);
+        filmRepository.putLike(created.getId(), 2);
+
+        List<Film> popular = filmRepository.getPopular(10, genre3.getId(), 1988);
+
+        assertThat(popular.stream().map(Film::getId)).contains(created.getId());
+    }
+
+    @Test
+    void shouldGetPopularWithYear() {
+        MpaRating mpa = new MpaRating();
+        mpa.setId(1);
+
+        Genre genre = new Genre();
+        genre.setId(1);
+
+        Film filmY = new Film();
+        filmY.setName("year-film");
+        filmY.setDescription("year-film");
+        filmY.setReleaseDate(LocalDate.of(1970, 1, 1));
+        filmY.setDuration(110);
+        filmY.setRating(mpa);
+        filmY.setGenres(Set.of(genre));
+
+        Film created = filmRepository.create(filmY);
+        filmRepository.putLike(created.getId(), 1);
+
+        List<Film> popular = filmRepository.getPopular(10, null, 1970);
+
+        assertThat(popular.stream().map(Film::getId)).contains(created.getId());
     }
 }
