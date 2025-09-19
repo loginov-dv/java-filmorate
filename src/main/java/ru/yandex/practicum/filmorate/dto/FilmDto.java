@@ -5,11 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 // Film data transfer object
@@ -27,5 +29,6 @@ public class FilmDto {
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private int duration;
     private MpaRating mpa;
-    private Set<Genre> genres;
+    private Set<Genre> genres = new HashSet<>();
+    private Set<Director> directors = new HashSet<>();
 }

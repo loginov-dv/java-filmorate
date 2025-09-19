@@ -73,7 +73,7 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public User update(User user) {
-        logger.debug("Запрос на обновление строки в таблице films с id = {}", user.getId());
+        logger.debug("Запрос на обновление строки в таблице users с id = {}", user.getId());
         update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
