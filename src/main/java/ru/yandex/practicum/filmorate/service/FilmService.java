@@ -234,12 +234,12 @@ public class FilmService {
                 .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
-  
+
     // Удалить фильм по id
     public void removeFilmById(int filmId) {
         filmRepository.removeFilmById(filmId);
     }
-  
+
     public List<FilmDto> search(int directorId, String sortBy) {
         Optional<Director> maybeDirector = directorRepository.getById(directorId);
 
