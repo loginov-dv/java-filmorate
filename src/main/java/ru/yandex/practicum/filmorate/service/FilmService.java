@@ -4,8 +4,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.*;
-import ru.yandex.practicum.filmorate.dto.*;
+import ru.yandex.practicum.filmorate.dal.DirectorRepository;
+import ru.yandex.practicum.filmorate.dal.FilmRepository;
+import ru.yandex.practicum.filmorate.dal.GenreRepository;
+import ru.yandex.practicum.filmorate.dal.MpaRepository;
+import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.DirectorIdDto;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
+import ru.yandex.practicum.filmorate.dto.GenreIdDto;
+import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
+import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -192,7 +200,7 @@ public class FilmService {
         return popular.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
     }
 
-    // Поиск фильмов режиссёра (существующая задача)
+    // Поиск фильмов режиссёра
     public List<FilmDto> search(int directorId, String sortBy) {
         Optional<Director> maybeDirector = directorRepository.getById(directorId);
         if (maybeDirector.isEmpty()) {
@@ -214,14 +222,16 @@ public class FilmService {
         return searchResult.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
     }
 
-    // НОВОЕ: Поиск по подстроке (title/director/director,title), сортировка по популярности
+    // Поиск по подстроке (title/director/director,title), сортировка по популярности
     public List<FilmDto> search(String query, String by) {
         logger.debug("Поиск фильмов: query='{}', by='{}'", query, by);
 
         if (query == null || query.trim().isEmpty()) {
+            logger.warn("Поиск отклонён: пустой параметр query");
             throw new ValidationException("Параметр query обязателен и не может быть пустым");
         }
         if (by == null || by.trim().isEmpty()) {
+            logger.warn("Поиск отклонён: пустой параметр by");
             throw new ValidationException("Параметр by обязателен и не может быть пустым");
         }
 
@@ -252,6 +262,8 @@ public class FilmService {
     // Валидация нормализованного множества значений
     private void validateBy(Set<String> bySet) {
         if (bySet.isEmpty() || !ALLOWED_SEARCH_BY.containsAll(bySet)) {
+            logger.warn("Поиск отклонён: неподдерживаемый параметр by={}, допустимо={}",
+                    bySet, ALLOWED_SEARCH_BY);
             throw new ValidationException("Параметр by должен быть 'title', 'director' или 'director,title'");
         }
     }
