@@ -83,4 +83,4 @@ CREATE TABLE IF NOT EXISTS review_likes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_film_id ON reviews(film_id);
-CREATE INDEX IF NOT EXISTS idx_reviews_useful ON reviews(useful);;
+CREATE INDEX IF NOT EXISTS idx_reviews_useful ON reviews(useful);
