@@ -190,46 +190,60 @@ public class FilmRepository extends BaseRepository<Film> {
     private static final String GET_RECOMMENDED_FILMS_QUERY = """
             WITH intersections AS (
                 SELECT l2.user_id, COUNT(*) AS intersection_count
-                FROM film_likes AS l1
-                JOIN film_likes AS l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
+                FROM film_likes l1
+                JOIN film_likes l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
                 WHERE l1.user_id = ?
                 GROUP BY l2.user_id
             ),
             likecounts AS (
-                SELECT user_id, COUNT(*) AS like_count FROM film_likes GROUP BY user_id
+                SELECT user_id, COUNT(*) AS like_count
+                FROM film_likes
+                GROUP BY user_id
             ),
             targetlikecount AS (
-                SELECT COUNT(*) AS target_like_count FROM film_likes WHERE user_id = ?
+                SELECT COUNT(*) AS target_like_count
+                FROM film_likes
+                WHERE user_id = ?
             ),
             neighbours AS (
                 SELECT
                     i.user_id,
                     i.intersection_count * 100.0 / (t.target_like_count + lc.like_count - i.intersection_count) AS similarity
-                FROM intersections AS i
+                FROM intersections i
                 JOIN likecounts lc ON i.user_id = lc.user_id
-                CROSS JOIN targetlikecount AS t
+                CROSS JOIN targetlikecount t
                 ORDER BY similarity DESC
                 LIMIT 20
             ),
             recommended AS (
-                SELECT l.film_id, SUM(n.similarity) AS score
-                FROM film_likes AS l
-                JOIN neighbours AS n ON l.user_id = n.user_id
-                WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-                GROUP BY l.film_id
+                SELECT f.film_id, COALESCE(SUM(n.similarity), 0) AS score
+                FROM films f
+                LEFT JOIN film_likes l ON f.film_id = l.film_id
+                LEFT JOIN neighbours n ON l.user_id = n.user_id
+                WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
+                GROUP BY f.film_id
             )
             SELECT
-                f.film_id AS id,
-                f.name,
-                f.description,
-                f.release_date,
-                f.duration,
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
                 f.rating_id,
-                r.name AS rating_name
-            FROM recommended r
-            JOIN films f ON f.film_id = r.film_id
+                r.name AS rating_name,
+                g.genre_id,
+                g.name AS genre_name,
+                d.director_id,
+                d.name AS director_name
+            FROM recommended rec
+            JOIN films f ON f.film_id = rec.film_id
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
-            ORDER BY r.score DESC;
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors fd ON f.film_id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.director_id
+            ORDER BY rec.score DESC, f.film_id;
+            
             """;
 
     // Логгер
