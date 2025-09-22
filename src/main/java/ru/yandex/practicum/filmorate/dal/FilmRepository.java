@@ -192,8 +192,7 @@ public class FilmRepository extends BaseRepository<Film> {
                 SELECT l2.user_id, COUNT(*) AS intersection_count
                 FROM film_likes AS l1
                 JOIN film_likes AS l2
-                    ON l1.film_id = l2.film_id
-                   AND l1.user_id != l2.user_id
+                    ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
                 WHERE l1.user_id = ?
                 GROUP BY l2.user_id
             ),
@@ -210,11 +209,11 @@ public class FilmRepository extends BaseRepository<Film> {
             neighbours AS (
                 SELECT
                     i.user_id,
-                    i.intersection_count * 100
-                      / (t.target_like_count + lc.like_count - i.intersection_count) AS similarity
+                    i.intersection_count * 100 / (t.target_like_count + lc.like_count - i.intersection_count) AS similarity
                 FROM intersections AS i
                 JOIN likecounts lc ON i.user_id = lc.user_id
                 CROSS JOIN targetlikecount AS t
+                LIMIT 20
             )
             SELECT
                 f.film_id AS id,
@@ -224,14 +223,26 @@ public class FilmRepository extends BaseRepository<Film> {
                 f.duration AS duration,
                 f.rating_id AS rating_id,
                 r.name AS rating_name,
-                ARRAY_AGG(DISTINCT l2.user_id) AS film_likes,
-                STRINGAGG(DISTINCT g.genre_id || ':' || g.name, ',') AS genres,
-                STRINGAGG(DISTINCT d.director_id || ':' || d.director_name, ',') AS directors,
+                ARRAY_AGG(DISTINCT l2.user_id) AS likes,
+                CAST(
+                  JSON_ARRAYAGG(
+                    DISTINCT JSON_OBJECT(
+                      'id' : g.genre_id,
+                      'name' : g.name
+                    )
+                  ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
+                ) AS genres,
+                CAST(
+                  JSON_ARRAYAGG(
+                    DISTINCT JSON_OBJECT(
+                      'id' : d.director_id,
+                      'name' : d.director_name
+                    )
+                  ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
+                ) AS directors,
                 SUM(n.similarity) AS score
             FROM film_likes AS l
-            JOIN (
-                SELECT * FROM neighbours LIMIT 20
-            ) AS n ON l.user_id = n.user_id
+            JOIN neighbours AS n ON l.user_id = n.user_id
             LEFT JOIN films AS f ON f.film_id = l.film_id
             LEFT JOIN film_likes AS l2 ON f.film_id = l2.film_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
@@ -242,7 +253,7 @@ public class FilmRepository extends BaseRepository<Film> {
             WHERE l.film_id NOT IN (
                 SELECT film_id FROM film_likes WHERE user_id = ?
             )
-            GROUP BY l.film_id, f.name, f.description, f.release_date, f.duration, f.rating_id, r.name
+            GROUP BY f.film_id
             ORDER BY score DESC;
             """;
 
