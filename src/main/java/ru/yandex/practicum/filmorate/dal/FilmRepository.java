@@ -188,13 +188,10 @@ public class FilmRepository extends BaseRepository<Film> {
             ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
             """;
     private static final String GET_RECOMMENDED_FILMS_QUERY = """
-            WITH user_likes AS (
-                SELECT film_id FROM film_likes WHERE user_id = ?
-            ),
-            intersections AS (
+            WITH intersections AS (
                 SELECT l2.user_id, COUNT(*) AS intersection_count
-                FROM film_likes l1
-                JOIN film_likes l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
+                FROM film_likes AS l1
+                JOIN film_likes AS l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
                 WHERE l1.user_id = ?
                 GROUP BY l2.user_id
             ),
@@ -202,59 +199,55 @@ public class FilmRepository extends BaseRepository<Film> {
                 SELECT user_id, COUNT(*) AS like_count FROM film_likes GROUP BY user_id
             ),
             targetlikecount AS (
-                SELECT COUNT(*) AS target_like_count FROM film_likes WHERE user_id = ?
+                SELECT COUNT(*) AS target_like_count FROM LIKES WHERE user_id = ?
             ),
             neighbours AS (
                 SELECT
                     i.user_id,
-                    i.intersection_count * 100.0 / (t.target_like_count + lc.like_count - i.intersection_count) AS similarity
-                FROM intersections i
+                    i.intersection_count * 100 / ( t.target_like_count + lc.like_count - i.intersection_count ) AS similarity
+                FROM intersections AS i
                 JOIN likecounts lc ON i.user_id = lc.user_id
-                CROSS JOIN targetlikecount t
-                ORDER BY similarity DESC
+                CROSS JOIN targetlikecount AS t
                 LIMIT 20
-            ),
-            recommended_by_neighbours AS (
-                SELECT l.film_id, SUM(n.similarity) AS score
-                FROM film_likes l
-                JOIN neighbours n ON l.user_id = n.user_id
-                WHERE l.film_id NOT IN (SELECT film_id FROM user_likes)
-                GROUP BY l.film_id
-            ),
-            popular_films AS (
-                SELECT f.film_id, COUNT(fl.user_id) AS score
-                FROM films f
-                LEFT JOIN film_likes fl ON f.film_id = fl.film_id
-                WHERE f.film_id NOT IN (SELECT film_id FROM user_likes)
-                GROUP BY f.film_id
-                ORDER BY score DESC
-                LIMIT 20
-            ),
-            final_recommendations AS (
-                SELECT film_id, score FROM recommended_by_neighbours
-                UNION
-                SELECT film_id, score FROM popular_films
             )
             SELECT
                 f.film_id AS id,
-                f.name,
-                f.description,
-                f.release_date,
-                f.duration,
-                f.rating_id,
+                f.name AS name,
+                f.description AS description,
+                f.release_date AS release_date,
+                f.duration AS duration,
+                f.rating_id AS rating_id,
                 r.name AS rating_name,
-                GROUP_CONCAT(DISTINCT g.genre_id || ':' || g.name) AS genres,
-                GROUP_CONCAT(DISTINCT d.director_id || ':' || d.name) AS directors
-            FROM final_recommendations fr
-            JOIN films f ON f.film_id = fr.film_id
-            LEFT JOIN ratings r ON f.rating_id = r.rating_id
-            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
-            LEFT JOIN genres g ON fg.genre_id = g.genre_id
-            LEFT JOIN film_directors fd ON f.film_id = fd.film_id
-            LEFT JOIN directors d ON fd.director_id = d.director_id
-            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration, f.rating_id, r.name, fr.score
-            ORDER BY fr.score DESC
-            LIMIT 20;
+                ARRAY_AGG(DISTINCT l2.user_id) AS film_likes,
+                CAST(
+                  JSON_ARRAYAGG(
+                    DISTINCT JSON_OBJECT(
+                      'id' : g.genre_id,
+                      'name' : g.name
+                    )
+                  ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
+                ) AS genres,
+                CAST(
+                    JSON_ARRAYAGG(
+                        DISTINCT JSON_OBJECT(
+                            'id' : d.director_id,
+                            'name' : d.director_name
+                        )
+                    ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
+                ) AS directors,
+                SUM(n.similarity) AS score
+            FROM film_likes AS l
+            JOIN neighbours AS n ON l.user_id = n.user_id
+            LEFT JOIN films AS f ON f.film_id = l.film_id
+            LEFT JOIN film_likes AS l2 ON f.film_id = l2.film_id
+            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+            LEFT JOIN genres AS g ON g.genre_id = fg.genre_id
+            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+            LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
+            LEFT JOIN directors AS d ON d.director_id = fd.director_id
+            WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
+            GROUP BY l.film_id
+            ORDER BY score DESC
             """;
 
     // Логгер
