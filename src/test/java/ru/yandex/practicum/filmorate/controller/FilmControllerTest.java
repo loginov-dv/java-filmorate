@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,6 +39,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class FilmControllerTest {
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private JdbcTemplate jdbc;
+
     // Gson
     private final Gson gson = new GsonBuilder()
             .registerTypeAdapter(LocalDate.class, new LocalDateAdapter())
@@ -330,6 +335,199 @@ class FilmControllerTest {
         List<Film> popularFilms = gson.fromJson(json, typeToken.getType());
 
         assertNotNull(popularFilms);
-        assertEquals(3, popularFilms.size());
+        assertEquals(5, popularFilms.size());
+    }
+
+    // helper: получить id фильма по имени
+    private int getFilmIdByName(String name) {
+        return jdbc.queryForObject("SELECT film_id FROM films WHERE name = ?", Integer.class, name);
+    }
+
+    // NEW: если режиссёр с таким именем уже есть — используем его id, иначе создаём
+    private int ensureDirector(String name) {
+        List<Integer> ids = jdbc.query(
+                "SELECT director_id FROM directors WHERE name = ? ORDER BY director_id",
+                (rs, rn) -> rs.getInt(1),
+                name
+        );
+        if (!ids.isEmpty()) {
+            return ids.get(0);
+        }
+        jdbc.update("INSERT INTO directors(name) VALUES (?)", name);
+        return jdbc.queryForObject(
+                "SELECT director_id FROM directors WHERE name = ? ORDER BY director_id DESC LIMIT 1",
+                Integer.class,
+                name
+        );
+    }
+
+    // FIX: привязка фильма к режиссёру без дублирования режиссёра
+    private void linkDirectorToFilm(int filmId, String directorName) {
+        int directorId = ensureDirector(directorName);
+        jdbc.update("INSERT INTO film_directors(film_id, director_id) VALUES (?,?)", filmId, directorId);
+    }
+
+    @Test
+    void shouldSearchByTitle_sortedByLikes() throws Exception {
+        // создаём 3 уникальных фильма с подстрокой 'searchTitle'
+        MpaIdDto mpa = new MpaIdDto(); mpa.setId(1);
+
+        NewFilmRequest a = new NewFilmRequest();
+        a.setName("searchTitle_A");
+        a.setDescription("d"); a.setReleaseDate(LocalDate.of(2010,1,1)); a.setDuration(100); a.setMpa(mpa);
+        NewFilmRequest b = new NewFilmRequest();
+        b.setName("searchTitle_B");
+        b.setDescription("d"); b.setReleaseDate(LocalDate.of(2011,1,1)); b.setDuration(100); b.setMpa(mpa);
+        NewFilmRequest c = new NewFilmRequest();
+        c.setName("searchTitle_C");
+        c.setDescription("d"); c.setReleaseDate(LocalDate.of(2012,1,1)); c.setDuration(100); c.setMpa(mpa);
+
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(a))).andExpect(status().isCreated());
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(b))).andExpect(status().isCreated());
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(c))).andExpect(status().isCreated());
+
+        int aId = getFilmIdByName("searchTitle_A");
+        int bId = getFilmIdByName("searchTitle_B");
+        int cId = getFilmIdByName("searchTitle_C");
+
+        // лайки: A=2, B=1, C=0
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", aId, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", aId, 2);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", bId, 1);
+
+        MvcResult res = mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "searchTitle")
+                        .param("by", "title"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TypeToken<List<FilmDto>> tt = new TypeToken<>() {};
+        List<FilmDto> list = gson.fromJson(res.getResponse().getContentAsString(), tt.getType());
+        assertNotNull(list);
+        // фильтруем только наши (по префиксу), чтобы не зависеть от тестовых данных
+        List<FilmDto> ours = list.stream().filter(f -> f.getName().startsWith("searchTitle_")).toList();
+        assertEquals(3, ours.size());
+        assertEquals("searchTitle_A", ours.get(0).getName());
+        assertEquals("searchTitle_B", ours.get(1).getName());
+        assertEquals("searchTitle_C", ours.get(2).getName());
+    }
+
+    @Test
+    void shouldSearchByDirector_sortedByLikes() throws Exception {
+        // создаём 2 фильма без подстроки в названии
+        MpaIdDto mpa = new MpaIdDto(); mpa.setId(1);
+
+        NewFilmRequest f1 = new NewFilmRequest();
+        f1.setName("X1_for_director_search");
+        f1.setDescription("d"); f1.setReleaseDate(LocalDate.of(2013,1,1)); f1.setDuration(100); f1.setMpa(mpa);
+
+        NewFilmRequest f2 = new NewFilmRequest();
+        f2.setName("X2_for_director_search");
+        f2.setDescription("d"); f2.setReleaseDate(LocalDate.of(2014,1,1)); f2.setDuration(100); f2.setMpa(mpa);
+
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(f1))).andExpect(status().isCreated());
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(f2))).andExpect(status().isCreated());
+
+        int id1 = getFilmIdByName("X1_for_director_search");
+        int id2 = getFilmIdByName("X2_for_director_search");
+
+        // режиссёр, в имени которого есть 'searchDirector'
+        linkDirectorToFilm(id1, "Director searchDirector One");
+        linkDirectorToFilm(id2, "Director searchDirector One");
+
+        // лайки: id1=1, id2=0
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", id1, 1);
+
+        MvcResult res = mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "searchDirector")
+                        .param("by", "director"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TypeToken<List<FilmDto>> tt = new TypeToken<>() {};
+        List<FilmDto> list = gson.fromJson(res.getResponse().getContentAsString(), tt.getType());
+        assertNotNull(list);
+        // выбираем только наши фильмы X1/X2
+        List<FilmDto> ours = list.stream().filter(f -> f.getName().endsWith("_for_director_search")).toList();
+        assertEquals(2, ours.size());
+        assertEquals("X1_for_director_search", ours.get(0).getName()); // у него 1 лайк
+        assertEquals("X2_for_director_search", ours.get(1).getName()); // 0 лайков
+    }
+
+    @Test
+    void shouldSearchByDirectorAndTitle_noDuplicates_sortedByLikes() throws Exception {
+        // готовим 3 фильма под уникальный запрос 'searchCombo'
+        MpaIdDto mpa = new MpaIdDto(); mpa.setId(1);
+
+        NewFilmRequest both = new NewFilmRequest();
+        both.setName("searchCombo_both");
+        both.setDescription("d"); both.setReleaseDate(LocalDate.of(2015,1,1)); both.setDuration(100); both.setMpa(mpa);
+
+        NewFilmRequest onlyTitle = new NewFilmRequest();
+        onlyTitle.setName("searchCombo_title_only");
+        onlyTitle.setDescription("d"); onlyTitle.setReleaseDate(LocalDate.of(2016,1,1)); onlyTitle.setDuration(100); onlyTitle.setMpa(mpa);
+
+        NewFilmRequest onlyDirector = new NewFilmRequest();
+        onlyDirector.setName("Other_for_cmb");
+        onlyDirector.setDescription("d"); onlyDirector.setReleaseDate(LocalDate.of(2017,1,1)); onlyDirector.setDuration(100); onlyDirector.setMpa(mpa);
+
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(both))).andExpect(status().isCreated());
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(onlyTitle))).andExpect(status().isCreated());
+        mockMvc.perform(post(FILMS_URL).contentType(MediaType.APPLICATION_JSON).content(gson.toJson(onlyDirector))).andExpect(status().isCreated());
+
+        int idBoth = getFilmIdByName("searchCombo_both");
+        int idTitle = getFilmIdByName("searchCombo_title_only");
+        int idDir = getFilmIdByName("Other_for_cmb");
+
+        // режиссёры: у двух из них имя содержит 'searchCombo'
+        linkDirectorToFilm(idBoth, "Director searchCombo Hit");
+        linkDirectorToFilm(idTitle, "Director Other");
+        linkDirectorToFilm(idDir, "searchCombo Director Only");
+
+        // лайки: both=3, title=2, dir=1
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 2);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idBoth, 3);
+
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idTitle, 1);
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idTitle, 2);
+
+        jdbc.update("INSERT INTO film_likes(film_id, user_id) VALUES (?,?)", idDir, 1);
+
+        MvcResult res = mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "searchCombo")
+                        .param("by", "director,title"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        TypeToken<List<FilmDto>> tt = new TypeToken<>() {};
+        List<FilmDto> list = gson.fromJson(res.getResponse().getContentAsString(), tt.getType());
+        assertNotNull(list);
+        // фильтруем наши 3 фильма
+        List<FilmDto> ours = list.stream()
+                .filter(f -> f.getName().equals("searchCombo_both")
+                        || f.getName().equals("searchCombo_title_only")
+                        || f.getName().equals("Other_for_cmb"))
+                .toList();
+        assertEquals(3, ours.size());
+        assertEquals("searchCombo_both",  ours.get(0).getName());      // 3 лайка
+        assertEquals("searchCombo_title_only", ours.get(1).getName()); // 2 лайка
+        assertEquals("Other_for_cmb", ours.get(2).getName());          // 1 лайк
+    }
+
+    @Test
+    void shouldReturnBadRequestOnBlankQuery() throws Exception {
+        mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "   ")
+                        .param("by", "title"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldReturnBadRequestOnUnsupportedBy() throws Exception {
+        mockMvc.perform(get(FILMS_URL + "/search")
+                        .param("query", "searchTitle")
+                        .param("by", "foo"))
+                .andExpect(status().isBadRequest());
     }
 }

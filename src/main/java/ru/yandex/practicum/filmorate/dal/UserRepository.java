@@ -32,6 +32,8 @@ public class UserRepository extends BaseRepository<User> {
             "VALUES(?, ?, true)";
     private static final String DELETE_FROM_FRIENDSHIPS_QUERY = "DELETE FROM friendships " +
             "WHERE user_id = ? AND friend_id = ?";
+
+    private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE user_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
 
@@ -71,7 +73,7 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public User update(User user) {
-        logger.debug("Запрос на обновление строки в таблице films с id = {}", user.getId());
+        logger.debug("Запрос на обновление строки в таблице users с id = {}", user.getId());
         update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
@@ -99,5 +101,10 @@ public class UserRepository extends BaseRepository<User> {
     public List<User> getFriends(int userId) {
         logger.debug("Запрос на получение всех друзей пользователя с id = {}", userId);
         return findMany(FIND_FRIENDS_QUERY, userId);
+    }
+
+    public void removeUserById(int userId) {
+        logger.debug("Запрос на удаление пользователя с user_id = {}", userId);
+        update(DELETE_USER_QUERY, userId);
     }
 }

@@ -87,11 +87,17 @@ public class UserController {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
     }
-
+  
     // Эндпоинт GET /users/{id}/feed
     @GetMapping("/{id}/feed")
     public List<EventDto> getFeed(@PathVariable int id) {
         logger.debug("Вызов эндпоинта GET /users/{id}/feed");
         return userService.getFeed(id);
+    }
+
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable int userId) {
+        logger.debug("Вызов эндпоинта DELETE /users/{userId}");
+        userService.removeUserById(userId);
     }
 }

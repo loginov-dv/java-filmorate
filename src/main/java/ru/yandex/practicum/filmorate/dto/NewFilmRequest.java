@@ -25,4 +25,5 @@ public class NewFilmRequest {
     @NotNull(message = "Рейтинг должен быть указан")
     private MpaIdDto mpa;
     private Set<GenreIdDto> genres;
+    private Set<DirectorIdDto> directors;
 }
