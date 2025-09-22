@@ -235,7 +235,7 @@ public class UserService {
                 .map(EventMapper::mapToEventDto)
                 .toList();
     }
-  
+
     public void removeUserById(int userId) {
         userRepository.removeUserById(userId);
     }

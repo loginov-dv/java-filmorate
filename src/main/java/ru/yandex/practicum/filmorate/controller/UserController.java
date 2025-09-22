@@ -87,7 +87,7 @@ public class UserController {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
     }
-  
+
     // Эндпоинт GET /users/{id}/feed
     @GetMapping("/{id}/feed")
     public List<EventDto> getFeed(@PathVariable int id) {
