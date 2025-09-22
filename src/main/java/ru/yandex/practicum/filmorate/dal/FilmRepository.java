@@ -234,7 +234,6 @@ public class FilmRepository extends BaseRepository<Film> {
             WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
             GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration, f.rating_id, r.name
             ORDER BY score DESC;
-            
             """;
 
     // Логгер
