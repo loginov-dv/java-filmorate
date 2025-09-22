@@ -188,6 +188,7 @@ public class FilmRepository extends BaseRepository<Film> {
             ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
             """;
 
+    private static final String GET_FILMS_ID_BY_USER_ID_QUERY = "SELECT film_id FROM film_likes WHERE user_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -364,7 +365,12 @@ public class FilmRepository extends BaseRepository<Film> {
         return findMany(sql, filmResultSetExtractor, params);
     }
 
-    private String createPlaceholders(int count) {
+    public List<Integer> getFilmLikesByUserId(int userId) {
+        logger.debug("Запрос на получение всех film_id из таблицы film_likes для user_id = {}", userId);
+        return super.findManyInts(GET_FILMS_ID_BY_USER_ID_QUERY, userId);
+    }
+
+        private String createPlaceholders(int count) {
         return String.join(",", Collections.nCopies(count, "?"));
     }
 }

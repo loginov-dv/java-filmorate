@@ -279,6 +279,41 @@ public class FilmService {
         return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
     }
 
+    public List<FilmDto> getCommon(int userId, int friendId) {
+        logger.debug("Запрос на получение общих фильмов друзей с id = {} и id = {}",
+                userId, friendId);
+
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        if (userRepository.getById(friendId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
+        }
+
+        if (userRepository.getFriends(userId).isEmpty() || userRepository.getFriends(userId).stream()
+                .noneMatch(friend -> friend.getId() == friendId)) {
+            logger.warn("Пользователи с id = {} и id = {}, не являются друзьями", userId, friendId);
+            throw new ValidationException("Пользователи с id = " + userId + " и id = " + friendId
+                    + " не являются друзьями");
+        }
+
+        List<Integer> userFilmsIds = filmRepository.getFilmLikesByUserId(userId);
+        List<Integer> friendsFilmsIds = filmRepository.getFilmLikesByUserId(friendId);
+
+        return userFilmsIds.stream()
+                .filter(friendsFilmsIds::contains)
+                .map(filmRepository::getById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparingInt((Film film) -> filmRepository.getLikesUserId(film.getId()).size())
+                        .reversed())
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
+    }
+
     // Разбор и нормализация значения by
     private Set<String> parseBy(String by) {
         return Arrays.stream(by.split(","))
