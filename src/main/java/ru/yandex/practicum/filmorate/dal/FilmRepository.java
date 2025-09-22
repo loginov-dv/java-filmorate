@@ -7,6 +7,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
+import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -223,16 +224,16 @@ public class FilmRepository extends BaseRepository<Film> {
                 CAST(
                   JSON_ARRAYAGG(
                     DISTINCT JSON_OBJECT(
-                      'id' : g.genre_id,
-                      'name' : g.name
+                      'id' VALUE g.genre_id,
+                      'name' VALUE g.name
                     )
                   ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
                 ) AS genres,
                 CAST(
                     JSON_ARRAYAGG(
                         DISTINCT JSON_OBJECT(
-                            'id' : d.director_id,
-                            'name' : d.name
+                            'id' VALUE d.director_id,
+                            'name' VALUE d.name
                         )
                     ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
                 ) AS directors,
@@ -429,7 +430,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getRecommendations(int userId) {
         logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
-        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, new FilmRowMapper(), userId, userId, userId);
     }
 
     private String createPlaceholders(int count) {
