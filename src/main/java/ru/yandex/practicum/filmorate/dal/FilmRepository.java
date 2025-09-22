@@ -212,16 +212,18 @@ public class FilmRepository extends BaseRepository<Film> {
                 FROM intersections i
                 JOIN likecounts lc ON i.user_id = lc.user_id
                 CROSS JOIN targetlikecount t
+                WHERE t.target_like_count > 0   -- добавляем условие, чтобы пользователь имел лайки
                 ORDER BY similarity DESC
                 LIMIT 20
             ),
             recommended AS (
-                SELECT f.film_id, COALESCE(SUM(n.similarity), 0) AS score
-                FROM films f
-                LEFT JOIN film_likes l ON f.film_id = l.film_id
-                LEFT JOIN neighbours n ON l.user_id = n.user_id
+                SELECT f.film_id, SUM(n.similarity) AS score
+                FROM film_likes l
+                JOIN neighbours n ON l.user_id = n.user_id  -- только фильмы лайкнутые соседями
+                JOIN films f ON f.film_id = l.film_id
                 WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
                 GROUP BY f.film_id
+                HAVING SUM(n.similarity) > 0               -- фильтруем фильмы с ненулевым score
             )
             SELECT
                 f.film_id AS film_id,
