@@ -7,7 +7,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
-import ru.yandex.practicum.filmorate.dal.mappers.FilmRowMapper;
 import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
@@ -430,7 +429,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getRecommendations(int userId) {
         logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
-        return findMany(GET_RECOMMENDED_FILMS_QUERY, new FilmRowMapper(), userId, userId, userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
     }
 
     private String createPlaceholders(int count) {
