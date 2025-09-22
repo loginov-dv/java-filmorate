@@ -355,11 +355,11 @@ public class FilmRepository extends BaseRepository<Film> {
 
         Object[] params;
         if (byTitle && byDirector) {
-            params = new Object[]{ like, like };
+            params = new Object[]{like, like};
         } else if (byTitle) {
-            params = new Object[]{ like };
+            params = new Object[]{like};
         } else {
-            params = new Object[]{ like };
+            params = new Object[]{like};
         }
 
         return findMany(sql, filmResultSetExtractor, params);
@@ -370,7 +370,7 @@ public class FilmRepository extends BaseRepository<Film> {
         return super.findManyInts(GET_FILMS_ID_BY_USER_ID_QUERY, userId);
     }
 
-        private String createPlaceholders(int count) {
+    private String createPlaceholders(int count) {
         return String.join(",", Collections.nCopies(count, "?"));
     }
 }

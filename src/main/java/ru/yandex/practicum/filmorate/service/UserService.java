@@ -190,8 +190,8 @@ public class UserService {
         List<User> secondUserFriends = userRepository.getFriends(secondUserId);
 
         List<User> commonFriends = firstUserFriends.stream()
-                        .filter(secondUserFriends::contains)
-                        .collect(Collectors.toList());
+                .filter(secondUserFriends::contains)
+                .collect(Collectors.toList());
 
         logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId,
                 commonFriends.stream()
