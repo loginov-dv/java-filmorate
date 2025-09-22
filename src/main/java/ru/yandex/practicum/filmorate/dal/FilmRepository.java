@@ -212,25 +212,18 @@ public class FilmRepository extends BaseRepository<Film> {
                 FROM intersections i
                 JOIN likecounts lc ON i.user_id = lc.user_id
                 CROSS JOIN targetlikecount t
-                WHERE t.target_like_count > 0
+                WHERE t.target_like_count > 0   -- добавляем условие, чтобы пользователь имел лайки
                 ORDER BY similarity DESC
                 LIMIT 20
             ),
             recommended AS (
                 SELECT f.film_id, SUM(n.similarity) AS score
                 FROM film_likes l
-                JOIN neighbours n ON l.user_id = n.user_id
+                JOIN neighbours n ON l.user_id = n.user_id  -- только фильмы лайкнутые соседями
                 JOIN films f ON f.film_id = l.film_id
                 WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
                 GROUP BY f.film_id
-                HAVING SUM(n.similarity) > 0
-            ),
-            fallback AS (
-                SELECT f.film_id
-                FROM films f
-                WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-                ORDER BY f.film_id
-                LIMIT 1
+                HAVING SUM(n.similarity) > 0               -- фильтруем фильмы с ненулевым score
             )
             SELECT
                 f.film_id AS film_id,
@@ -244,17 +237,14 @@ public class FilmRepository extends BaseRepository<Film> {
                 g.name AS genre_name,
                 d.director_id,
                 d.name AS director_name
-            FROM films f
-            LEFT JOIN recommended rec ON f.film_id = rec.film_id
+            FROM recommended rec
+            JOIN films f ON f.film_id = rec.film_id
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
             LEFT JOIN directors d ON fd.director_id = d.director_id
-            WHERE f.film_id IN (SELECT film_id FROM recommended
-                                UNION
-                                SELECT film_id FROM fallback)
-            ORDER BY COALESCE(rec.score, 0) DESC, f.film_id;
+            ORDER BY rec.score DESC, f.film_id;
             """;
 
     // Логгер
@@ -435,7 +425,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getRecommendations(int userId) {
         logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
-        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId, userId);
     }
 
     private String createPlaceholders(int count) {
