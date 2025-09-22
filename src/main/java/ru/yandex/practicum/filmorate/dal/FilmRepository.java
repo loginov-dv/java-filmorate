@@ -243,7 +243,6 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
             LEFT JOIN directors d ON fd.director_id = d.director_id
             ORDER BY rec.score DESC, f.film_id;
-            
             """;
 
     // Логгер
