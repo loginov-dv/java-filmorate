@@ -223,16 +223,16 @@ public class FilmRepository extends BaseRepository<Film> {
                 CAST(
                   JSON_ARRAYAGG(
                     DISTINCT JSON_OBJECT(
-                      'id' VALUE g.genre_id,
-                      'name' VALUE g.name
+                      'id' : g.genre_id,
+                      'name' : g.name
                     )
                   ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
                 ) AS genres,
                 CAST(
                     JSON_ARRAYAGG(
                         DISTINCT JSON_OBJECT(
-                            'id' VALUE d.director_id,
-                            'name' VALUE d.name
+                            'id' : d.director_id,
+                            'name' : d.name
                         )
                     ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
                 ) AS directors,
