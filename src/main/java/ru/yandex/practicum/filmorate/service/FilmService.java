@@ -285,13 +285,6 @@ public class FilmService {
             throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
         }
 
-        if (userRepository.getFriends(userId).isEmpty() || userRepository.getFriends(userId).stream()
-                .noneMatch(friend -> friend.getId() == friendId)) {
-            logger.warn("Пользователи с id = {} и id = {}, не являются друзьями", userId, friendId);
-            throw new ValidationException("Пользователи с id = " + userId + " и id = " + friendId
-                    + " не являются друзьями");
-        }
-
         List<Integer> userFilmsIds = filmRepository.getFilmLikesByUserId(userId);
         List<Integer> friendsFilmsIds = filmRepository.getFilmLikesByUserId(friendId);
 
