@@ -4,14 +4,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.dal.EventRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.EventDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.EventMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.model.events.Event;
+import ru.yandex.practicum.filmorate.model.events.EventType;
+import ru.yandex.practicum.filmorate.model.events.Operation;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,12 +29,15 @@ import java.util.stream.Collectors;
 public class UserService {
     // Репозиторий пользователей
     private final UserRepository userRepository;
+    // Репозиторий событий
+    private final EventRepository eventRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, EventRepository eventRepository) {
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
     }
 
     // Вернуть всех пользователей
@@ -54,6 +64,7 @@ public class UserService {
     }
 
     // Создать нового пользователя
+    @Transactional
     public UserDto create(NewUserRequest request) {
         logger.debug("Запрос на создания нового пользователя");
         logger.debug("Входные данные: {}", request);
@@ -74,6 +85,7 @@ public class UserService {
     }
 
     // Изменить пользователя
+    @Transactional
     public UserDto update(UpdateUserRequest request) {
         logger.debug("Запрос на изменение пользователя с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
@@ -107,6 +119,7 @@ public class UserService {
     }
 
     // Добавить дружескую связь между пользователями
+    @Transactional
     public void addFriend(int userId, int friendId) {
         logger.debug("Запрос на добавление пользователя с id = {} в друзья пользователя с id = {}",
                 friendId, userId);
@@ -132,9 +145,12 @@ public class UserService {
 
         userRepository.addFriend(userId, friendId);
         logger.info("Пользователь с id = {} добавил в друзья пользователя с id = {}", userId, friendId);
+
+        eventRepository.create(new Event(userId, friendId, EventType.FRIEND, Operation.ADD));
     }
 
     // Удалить дружескую связь между пользователями
+    @Transactional
     public void removeFriend(int userId, int friendId) {
         logger.debug("Запрос на удаления пользователя с id = {} из друзей пользователя с id = {}",
                 friendId, userId);
@@ -150,6 +166,8 @@ public class UserService {
 
         userRepository.removeFriend(userId, friendId);
         logger.info("Пользователь с id = {} удалил из друзей пользователя с id = {}", userId, friendId);
+
+        eventRepository.create(new Event(userId, friendId, EventType.FRIEND, Operation.REMOVE));
     }
 
     // Получить всех друзей пользователя с указанными id
@@ -200,6 +218,22 @@ public class UserService {
         return commonFriends.stream()
                 .map(UserMapper::mapToUserDto)
                 .collect(Collectors.toList());
+    }
+
+    // Получить ленту событий пользователя
+    public List<EventDto> getFeed(int id) {
+        logger.debug("Запрос на получение ленты событий пользователя с id = {}", id);
+
+        Optional<User> maybeUser = userRepository.getById(id);
+
+        if (maybeUser.isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", id);
+            throw new NotFoundException("Пользователь с id = " + id + " не найден");
+        }
+
+        return eventRepository.getUsersFeed(id).stream()
+                .map(EventMapper::mapToEventDto)
+                .toList();
     }
 
     public void removeUserById(int userId) {
