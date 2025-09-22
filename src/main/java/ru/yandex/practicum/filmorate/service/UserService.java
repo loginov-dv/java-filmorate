@@ -4,16 +4,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -24,10 +29,12 @@ public class UserService {
     private final UserRepository userRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final FilmRepository filmRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, FilmRepository filmRepository) {
         this.userRepository = userRepository;
+        this.filmRepository = filmRepository;
     }
 
     // Вернуть всех пользователей
@@ -190,8 +197,8 @@ public class UserService {
         List<User> secondUserFriends = userRepository.getFriends(secondUserId);
 
         List<User> commonFriends = firstUserFriends.stream()
-                        .filter(secondUserFriends::contains)
-                        .collect(Collectors.toList());
+                .filter(secondUserFriends::contains)
+                .collect(Collectors.toList());
 
         logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId,
                 commonFriends.stream()
@@ -199,6 +206,21 @@ public class UserService {
                         .collect(Collectors.toList()));
         return commonFriends.stream()
                 .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getRecommendations(int userId) {
+        logger.debug("Запрос на получение рекоммендованных фильмов для пользователя с id = {}", userId);
+
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        List<Film> films = filmRepository.getRecommendations(userId);
+        return films.stream()
+                .filter(Objects::nonNull)
+                .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
 

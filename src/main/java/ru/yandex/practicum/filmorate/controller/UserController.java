@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
 import ru.yandex.practicum.filmorate.dto.UserDto;
@@ -86,6 +87,12 @@ public class UserController {
                                           @PathVariable int otherId) {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<FilmDto> getRecommendations(@PathVariable int id) {
+        logger.debug("Вызов эндпоинта GET /users/{id}/recommendations");
+        return userService.getRecommendations(id);
     }
 
     @DeleteMapping("/{userId}")

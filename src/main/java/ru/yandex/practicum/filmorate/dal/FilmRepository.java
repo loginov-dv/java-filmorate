@@ -187,6 +187,58 @@ public class FilmRepository extends BaseRepository<Film> {
             WHERE ( :titleCond ) OR ( :directorCond )
             ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
             """;
+    private static final String GET_RECOMMENDED_FILMS_QUERY = """
+            WITH intersections AS (
+                            SELECT l2.user_id, COUNT(*) AS intersection_count
+                            FROM film_likes AS l1
+                            JOIN film_likes AS l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
+                            WHERE l1.user_id = ?
+                            GROUP BY l2.user_id
+                        ),
+                        likecounts AS (
+                            SELECT user_id, COUNT(*) AS like_count FROM film_likes GROUP BY user_id
+                        ),
+                        targetlikecount AS (
+                            SELECT COUNT(*) AS target_like_count FROM film_likes WHERE user_id = ?
+                        ),
+                        neighbours AS (
+                            SELECT
+                        	    i.user_id,
+                        	    i.intersection_count * 100 / ( t.target_like_count + lc.like_count - i.intersection_count ) AS similarity
+                            FROM intersections AS i
+                            JOIN likecounts lc ON i.user_id = lc.user_id
+                            CROSS JOIN targetlikecount AS t
+                            LIMIT 20
+                        )
+                        SELECT
+                        	f.film_id AS id,
+                        	f.name AS name,
+                            f.description AS description,
+                            f.release_date AS release_date,
+                            f.duration AS duration,
+                            f.rating_id AS rating_id,
+                            r.name AS rating_name,
+                            ARRAY_AGG(DISTINCT l2.user_id) AS film_likes,
+                            CAST(
+                              JSON_ARRAYAGG(
+                                DISTINCT JSON_OBJECT(
+                                  'id' : g.genre_id,
+                                  'name' : g.name
+                                )
+                              ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
+                            ) AS genres,
+                        	SUM(n.similarity) AS score
+                        FROM film_likes AS l
+                        JOIN neighbours AS n ON l.user_id = n.user_id
+                        LEFT JOIN films AS f ON f.film_id = l.film_id
+                        LEFT JOIN film_likes AS l2 ON f.film_id = l2.film_id
+                        LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+                        LEFT JOIN genres AS g ON g.genre_id = fg.genre_id
+                        LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+                        WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
+                        GROUP BY l.film_id
+                        ORDER BY score DESC
+            """;
 
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
@@ -354,14 +406,19 @@ public class FilmRepository extends BaseRepository<Film> {
 
         Object[] params;
         if (byTitle && byDirector) {
-            params = new Object[]{ like, like };
+            params = new Object[]{like, like};
         } else if (byTitle) {
-            params = new Object[]{ like };
+            params = new Object[]{like};
         } else {
-            params = new Object[]{ like };
+            params = new Object[]{like};
         }
 
         return findMany(sql, filmResultSetExtractor, params);
+    }
+
+    public List<Film> getRecommendations(int userId) {
+        logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId);
     }
 
     private String createPlaceholders(int count) {
