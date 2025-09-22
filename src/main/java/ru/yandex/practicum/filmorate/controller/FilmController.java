@@ -111,4 +111,12 @@ public class FilmController {
         logger.debug("Вызов эндпоинта GET /films/search");
         return filmService.search(query, by);
     }
+
+    // Эндпоинт GET /films/common?userId={userId}&friendId={friendId}
+    @GetMapping("/common")
+    public List<FilmDto> getCommon(@RequestParam int userId,
+                                   @RequestParam int friendId) {
+        logger.debug("Вызов эндпоинта GET /films/common?userId={userId}&friendId={friendId}");
+        return filmService.getCommon(userId, friendId);
+    }
 }
