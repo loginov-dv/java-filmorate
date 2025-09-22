@@ -243,30 +243,16 @@ public class FilmRepository extends BaseRepository<Film> {
                 f.duration,
                 f.rating_id,
                 r.name AS rating_name,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id' : g.genre_id,
-                            'name' : g.name
-                        )
-                    ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
-                ) AS genres,
-                CAST(
-                    JSON_ARRAYAGG(
-                        DISTINCT JSON_OBJECT(
-                            'id' : d.director_id,
-                            'name' : d.name
-                        )
-                    ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
-                ) AS directors
+                GROUP_CONCAT(DISTINCT g.genre_id || ':' || g.name) AS genres,
+                GROUP_CONCAT(DISTINCT d.director_id || ':' || d.name) AS directors
             FROM final_recommendations fr
-            LEFT JOIN films f ON f.film_id = fr.film_id
+            JOIN films f ON f.film_id = fr.film_id
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
             LEFT JOIN directors d ON fd.director_id = d.director_id
-            GROUP BY f.film_id, r.name, fr.score
+            GROUP BY f.film_id, f.name, f.description, f.release_date, f.duration, f.rating_id, r.name, fr.score
             ORDER BY fr.score DESC
             LIMIT 20;
             """;
