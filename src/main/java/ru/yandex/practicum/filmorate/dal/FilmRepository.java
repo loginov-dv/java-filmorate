@@ -188,57 +188,45 @@ public class FilmRepository extends BaseRepository<Film> {
             ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
             """;
     private static final String GET_RECOMMENDED_FILMS_QUERY = """
-            WITH intersections AS (
-                SELECT l2.user_id, COUNT(*) AS intersection_count
+            WITH user_likes AS (
+                SELECT film_id
+                FROM film_likes
+                WHERE user_id = ?
+            ),
+            common_counts AS (
+                SELECT l2.user_id, COUNT(*) AS cnt
                 FROM film_likes l1
                 JOIN film_likes l2 ON l1.film_id = l2.film_id
-                                  AND l1.user_id <> l2.user_id
-                WHERE l1.user_id = ?
+                WHERE l1.user_id = ? AND l1.user_id <> l2.user_id
                 GROUP BY l2.user_id
+                ORDER BY cnt DESC
+                LIMIT 1
             ),
-            max_intersection AS (
-                SELECT MAX(intersection_count) AS max_count FROM intersections
-            ),
-            best_users AS (
-                SELECT i.user_id
-                FROM intersections i
-                JOIN max_intersection m ON i.intersection_count = m.max_count
+            recommended_films AS (
+                SELECT l2.film_id
+                FROM film_likes l2
+                JOIN common_counts c ON l2.user_id = c.user_id
+                WHERE l2.film_id NOT IN (SELECT film_id FROM user_likes)
             )
-            SELECT f.film_id   AS id,
-                   f.name      AS name,
-                   f.description,
-                   f.release_date,
-                   f.duration,
-                   f.rating_id,
-                   r.name      AS rating_name,
-                   ARRAY_AGG(DISTINCT l2.user_id) AS likes,
-                   CAST(
-                       JSON_ARRAYAGG(
-                           DISTINCT JSON_OBJECT(
-                               'id' : g.genre_id,
-                               'name' : g.name
-                           )
-                       ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
-                   ) AS genres,
-                   CAST(
-                       JSON_ARRAYAGG(
-                           DISTINCT JSON_OBJECT(
-                               'id' : d.director_id,
-                               'name' : d.name
-                           )
-                       ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
-                   ) AS directors
-            FROM film_likes l
-            JOIN best_users bu ON l.user_id = bu.user_id
-            LEFT JOIN films f ON f.film_id = l.film_id
-            LEFT JOIN film_likes l2 ON f.film_id = l2.film_id
-            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
-            LEFT JOIN genres g ON g.genre_id = fg.genre_id
+            SELECT
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
+                r.rating_id AS rating_id,
+                r.name AS rating_name,
+                g.genre_id AS genre_id,
+                g.name AS genre_name,
+                d.director_id AS director_id,
+                d.name AS director_name
+            FROM films f
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
-            LEFT JOIN directors d ON d.director_id = fd.director_id
-            WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-            GROUP BY f.film_id, r.name
+            LEFT JOIN directors d ON fd.director_id = d.director_id
+            WHERE f.film_id IN (SELECT film_id FROM recommended_films)
             ORDER BY f.film_id;
             """;
 
