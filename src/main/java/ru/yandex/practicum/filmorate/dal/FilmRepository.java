@@ -217,13 +217,11 @@ public class FilmRepository extends BaseRepository<Film> {
                 LIMIT 20
             ),
             recommended AS (
-                SELECT f.film_id, SUM(n.similarity) AS score
+                SELECT l.film_id, SUM(n.similarity) AS score
                 FROM film_likes l
                 JOIN neighbours n ON l.user_id = n.user_id
-                JOIN films f ON f.film_id = l.film_id
-                WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-                GROUP BY f.film_id
-                HAVING SUM(n.similarity) > 0
+                WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
+                GROUP BY l.film_id
             ),
             fallback AS (
                 SELECT f.film_id
