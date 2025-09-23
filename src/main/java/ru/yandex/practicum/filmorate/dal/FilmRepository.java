@@ -191,68 +191,55 @@ public class FilmRepository extends BaseRepository<Film> {
             WITH intersections AS (
                 SELECT l2.user_id, COUNT(*) AS intersection_count
                 FROM film_likes l1
-                JOIN film_likes l2 ON l1.film_id = l2.film_id AND l1.user_id != l2.user_id
+                JOIN film_likes l2 ON l1.film_id = l2.film_id
+                                  AND l1.user_id <> l2.user_id
                 WHERE l1.user_id = ?
                 GROUP BY l2.user_id
             ),
-            likecounts AS (
-                SELECT user_id, COUNT(*) AS like_count
-                FROM film_likes
-                GROUP BY user_id
+            max_intersection AS (
+                SELECT MAX(intersection_count) AS max_count FROM intersections
             ),
-            targetlikecount AS (
-                SELECT COUNT(*) AS target_like_count
-                FROM film_likes
-                WHERE user_id = ?
-            ),
-            neighbours AS (
-                SELECT
-                    i.user_id,
-                    i.intersection_count * 100.0 / (t.target_like_count + lc.like_count - i.intersection_count) AS similarity
+            best_users AS (
+                SELECT i.user_id
                 FROM intersections i
-                JOIN likecounts lc ON i.user_id = lc.user_id
-                CROSS JOIN targetlikecount t
-                WHERE t.target_like_count > 0
-                ORDER BY similarity DESC
-                LIMIT 20
-            ),
-            recommended AS (
-                SELECT l.film_id, SUM(n.similarity) AS score
-                FROM film_likes l
-                JOIN neighbours n ON l.user_id = n.user_id
-                WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-                GROUP BY l.film_id
-            ),
-            fallback AS (
-                SELECT f.film_id
-                FROM films f
-                WHERE f.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
-                ORDER BY f.film_id
-                LIMIT 1
+                JOIN max_intersection m ON i.intersection_count = m.max_count
             )
-            SELECT
-                f.film_id AS film_id,
-                f.name AS film_name,
-                f.description AS film_description,
-                f.release_date AS film_release_date,
-                f.duration AS film_duration,
-                f.rating_id,
-                r.name AS rating_name,
-                g.genre_id,
-                g.name AS genre_name,
-                d.director_id,
-                d.name AS director_name
-            FROM films f
-            LEFT JOIN recommended rec ON f.film_id = rec.film_id
-            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            SELECT f.film_id   AS id,
+                   f.name      AS name,
+                   f.description,
+                   f.release_date,
+                   f.duration,
+                   f.rating_id,
+                   r.name      AS rating_name,
+                   ARRAY_AGG(DISTINCT l2.user_id) AS likes,
+                   CAST(
+                       JSON_ARRAYAGG(
+                           DISTINCT JSON_OBJECT(
+                               'id' : g.genre_id,
+                               'name' : g.name
+                           )
+                       ) FILTER (WHERE g.genre_id IS NOT NULL) AS VARCHAR
+                   ) AS genres,
+                   CAST(
+                       JSON_ARRAYAGG(
+                           DISTINCT JSON_OBJECT(
+                               'id' : d.director_id,
+                               'name' : d.name
+                           )
+                       ) FILTER (WHERE d.director_id IS NOT NULL) AS VARCHAR
+                   ) AS directors
+            FROM film_likes l
+            JOIN best_users bu ON l.user_id = bu.user_id
+            LEFT JOIN films f ON f.film_id = l.film_id
+            LEFT JOIN film_likes l2 ON f.film_id = l2.film_id
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
-            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN genres g ON g.genre_id = fg.genre_id
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
-            LEFT JOIN directors d ON fd.director_id = d.director_id
-            WHERE f.film_id IN (SELECT film_id FROM recommended
-                                UNION
-                                SELECT film_id FROM fallback)
-            ORDER BY COALESCE(rec.score, 0) DESC, f.film_id;
+            LEFT JOIN directors d ON d.director_id = fd.director_id
+            WHERE l.film_id NOT IN (SELECT film_id FROM film_likes WHERE user_id = ?)
+            GROUP BY f.film_id, r.name
+            ORDER BY f.film_id;
             """;
 
     // Логгер
