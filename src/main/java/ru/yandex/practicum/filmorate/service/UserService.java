@@ -8,11 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.EventRepository;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
-import ru.yandex.practicum.filmorate.dto.EventDto;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
-import ru.yandex.practicum.filmorate.dto.NewUserRequest;
-import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
-import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.EventMapper;
@@ -41,8 +37,7 @@ public class UserService {
     private final FilmRepository filmRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, EventRepository eventRepository) {
-    public UserService(UserRepository userRepository, FilmRepository filmRepository) {
+    public UserService(UserRepository userRepository, EventRepository eventRepository, FilmRepository filmRepository) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
         this.filmRepository = filmRepository;
@@ -216,8 +211,8 @@ public class UserService {
         List<User> secondUserFriends = userRepository.getFriends(secondUserId);
 
         List<User> commonFriends = firstUserFriends.stream()
-                        .filter(secondUserFriends::contains)
-                        .collect(Collectors.toList());
+                .filter(secondUserFriends::contains)
+                .collect(Collectors.toList());
 
         logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId,
                 commonFriends.stream()
