@@ -6,21 +6,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.EventRepository;
+import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
-import ru.yandex.practicum.filmorate.dto.EventDto;
-import ru.yandex.practicum.filmorate.dto.NewUserRequest;
-import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
-import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.EventMapper;
+import ru.yandex.practicum.filmorate.mapper.FilmMapper;
 import ru.yandex.practicum.filmorate.mapper.UserMapper;
+import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.events.Event;
 import ru.yandex.practicum.filmorate.model.events.EventType;
 import ru.yandex.practicum.filmorate.model.events.Operation;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,11 +34,13 @@ public class UserService {
     private final EventRepository eventRepository;
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
+    private final FilmRepository filmRepository;
 
     @Autowired
-    public UserService(UserRepository userRepository, EventRepository eventRepository) {
+    public UserService(UserRepository userRepository, EventRepository eventRepository, FilmRepository filmRepository) {
         this.userRepository = userRepository;
         this.eventRepository = eventRepository;
+        this.filmRepository = filmRepository;
     }
 
     // Вернуть всех пользователей
@@ -208,8 +211,8 @@ public class UserService {
         List<User> secondUserFriends = userRepository.getFriends(secondUserId);
 
         List<User> commonFriends = firstUserFriends.stream()
-                        .filter(secondUserFriends::contains)
-                        .collect(Collectors.toList());
+                .filter(secondUserFriends::contains)
+                .collect(Collectors.toList());
 
         logger.info("Общие друзья пользователей с id = {} и id = {}: {}", firstUserId, secondUserId,
                 commonFriends.stream()
@@ -217,6 +220,21 @@ public class UserService {
                         .collect(Collectors.toList()));
         return commonFriends.stream()
                 .map(UserMapper::mapToUserDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getRecommendations(int userId) {
+        logger.debug("Запрос на получение рекоммендованных фильмов для пользователя с id = {}", userId);
+
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        List<Film> films = filmRepository.getRecommendations(userId);
+        return films.stream()
+                .filter(Objects::nonNull)
+                .map(FilmMapper::mapToFilmDto)
                 .collect(Collectors.toList());
     }
 
