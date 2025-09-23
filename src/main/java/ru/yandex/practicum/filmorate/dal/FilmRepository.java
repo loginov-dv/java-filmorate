@@ -200,16 +200,10 @@ public class FilmRepository extends BaseRepository<Film> {
                 WHERE l1.user_id = ? AND l2.user_id <> ?
                 GROUP BY l2.user_id
             ),
-            best_user AS (
-                SELECT user_id
-                FROM common_counts
-                ORDER BY cnt DESC
-                LIMIT 1
-            ),
             recommended_films AS (
                 SELECT DISTINCT l2.film_id
                 FROM film_likes l2
-                JOIN best_user bu ON l2.user_id = bu.user_id
+                JOIN common_counts c ON l2.user_id = c.user_id
                 WHERE l2.film_id NOT IN (SELECT film_id FROM user_likes)
             )
             SELECT
@@ -229,7 +223,7 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
-            LEFT JOIN directors d ON fd.director_id = d.director_id
+            LEFT JOIN directors d ON fd.director_id = d.director_id  -- Исправлено!
             WHERE f.film_id IN (SELECT film_id FROM recommended_films)
             ORDER BY f.film_id;
             """;
