@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.dto.EventDto;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewUserRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
@@ -87,6 +88,13 @@ public class UserController {
                                           @PathVariable int otherId) {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
+    }
+
+    // Эндпоинт GET /users/{id}/feed
+    @GetMapping("/{id}/feed")
+    public List<EventDto> getFeed(@PathVariable int id) {
+        logger.debug("Вызов эндпоинта GET /users/{id}/feed");
+        return userService.getFeed(id);
     }
 
     @GetMapping("/{id}/recommendations")

@@ -1,20 +1,12 @@
 package ru.yandex.practicum.filmorate.service;
 
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.dal.DirectorRepository;
-import ru.yandex.practicum.filmorate.dal.FilmRepository;
-import ru.yandex.practicum.filmorate.dal.GenreRepository;
-import ru.yandex.practicum.filmorate.dal.MpaRepository;
-import ru.yandex.practicum.filmorate.dal.UserRepository;
-import ru.yandex.practicum.filmorate.dto.DirectorIdDto;
-import ru.yandex.practicum.filmorate.dto.FilmDto;
-import ru.yandex.practicum.filmorate.dto.GenreIdDto;
-import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
-import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.dal.*;
+import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mapper.FilmMapper;
@@ -22,6 +14,9 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
+import ru.yandex.practicum.filmorate.model.events.Event;
+import ru.yandex.practicum.filmorate.model.events.EventType;
+import ru.yandex.practicum.filmorate.model.events.Operation;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,19 +36,21 @@ public class FilmService {
     private final GenreRepository genreRepository;
     // Репозиторий пользователей
     private final UserRepository userRepository;
+    // Репозиторий событий
+    private final EventRepository eventRepository;
     // Репозиторий режиссёров
     private final DirectorRepository directorRepository;
-
     private static final int MIN_RELEASE_YEAR = 1895;
 
     @Autowired
     public FilmService(FilmRepository filmRepository, GenreRepository genreRepository,
                        MpaRepository mpaRepository, UserRepository userRepository,
-                       DirectorRepository directorRepository) {
+                       DirectorRepository directorRepository, EventRepository eventRepository) {
         this.filmRepository = filmRepository;
         this.genreRepository = genreRepository;
         this.mpaRepository = mpaRepository;
         this.userRepository = userRepository;
+        this.eventRepository = eventRepository;
         this.directorRepository = directorRepository;
     }
 
@@ -77,6 +74,7 @@ public class FilmService {
     }
 
     // Создать новый фильм
+    @Transactional
     public FilmDto create(NewFilmRequest request) {
         logger.debug("Запрос на создания нового фильма");
         logger.debug("Входные данные: {}", request);
@@ -119,6 +117,7 @@ public class FilmService {
     }
 
     // Изменить фильм
+    @Transactional
     public FilmDto update(UpdateFilmRequest request) {
         logger.debug("Запрос на изменение фильма с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
@@ -150,6 +149,7 @@ public class FilmService {
     }
 
     // Поставить лайк
+    @Transactional
     public void putLike(int filmId, int userId) {
         logger.debug("Запрос на добавление лайка фильма с id = {} от пользователя с id = {}", filmId, userId);
 
@@ -169,6 +169,8 @@ public class FilmService {
 
         filmRepository.putLike(filmId, userId);
         logger.info("Пользователь с id = {} поставил лайк фильму с id = {}", userId, filmId);
+
+        eventRepository.create(new Event(userId, filmId, EventType.LIKE, Operation.ADD));
     }
 
     // Удалить лайк
@@ -187,6 +189,8 @@ public class FilmService {
 
         filmRepository.removeLike(filmId, userId);
         logger.info("Пользователь с id = {} убрал лайк у фильма с id = {}", userId, filmId);
+
+        eventRepository.create(new Event(userId, filmId, EventType.LIKE, Operation.REMOVE));
     }
 
     // Облегчённая версия для старого эндпоинта /films/popular
