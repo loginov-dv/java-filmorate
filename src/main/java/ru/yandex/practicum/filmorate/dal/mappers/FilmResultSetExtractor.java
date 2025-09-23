@@ -32,7 +32,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<List<Film>> {
         boolean hasGenreName = columns.contains("genre_name");
         boolean hasRatingId = columns.contains("rating_id");
         boolean hasRatingName = columns.contains("rating_name");
-        boolean hasReleaseDate = columns.contains("release_date");
+        boolean hasReleaseDate = columns.contains("film_release_date");
 
         while (resultSet.next()) {
             Integer filmId = resultSet.getInt("film_id");
@@ -41,11 +41,11 @@ public class FilmResultSetExtractor implements ResultSetExtractor<List<Film>> {
             if (film == null) {
                 film = new Film();
                 film.setId(filmId);
-                film.setName(getStringSafe(resultSet, "name"));
-                film.setDescription(getStringSafe(resultSet, "description"));
+                film.setName(getStringSafe(resultSet, "film_name"));
+                film.setDescription(getStringSafe(resultSet, "film_description"));
 
                 if (hasReleaseDate) {
-                    java.sql.Date sqlDate = resultSet.getDate("release_date");
+                    java.sql.Date sqlDate = resultSet.getDate("film_release_date");
                     if (sqlDate != null) {
                         film.setReleaseDate(sqlDate.toLocalDate());
                     }
@@ -53,7 +53,7 @@ public class FilmResultSetExtractor implements ResultSetExtractor<List<Film>> {
 
                 // duration
                 try {
-                    int duration = resultSet.getInt("duration");
+                    int duration = resultSet.getInt("film_duration");
                     if (!resultSet.wasNull()) {
                         film.setDuration(duration);
                     }
