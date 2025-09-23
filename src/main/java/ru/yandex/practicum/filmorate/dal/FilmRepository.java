@@ -420,7 +420,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getRecommendations(int userId) {
         logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
-        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId, userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId);
     }
 
     private String createPlaceholders(int count) {
