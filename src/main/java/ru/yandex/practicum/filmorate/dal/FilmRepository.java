@@ -194,27 +194,23 @@ public class FilmRepository extends BaseRepository<Film> {
                 WHERE user_id = ?
             ),
             common_counts AS (
-                SELECT l2.user_id, COUNT(*) AS cnt
+                SELECT l2.user_id, COUNT(DISTINCT l1.film_id) AS cnt
                 FROM film_likes l1
                 JOIN film_likes l2 ON l1.film_id = l2.film_id
                 WHERE l1.user_id = ? AND l2.user_id <> ?
                 GROUP BY l2.user_id
             ),
-            max_count AS (
-                SELECT COALESCE(MAX(cnt), 0) AS max_cnt FROM common_counts
-            ),
-            best_users AS (
-                -- берем только тех пользователей, у кого cnt = max_cnt и max_cnt > 0
-                SELECT cc.user_id
-                FROM common_counts cc
-                JOIN max_count m ON cc.cnt = m.max_cnt
-                WHERE m.max_cnt > 0
+            best_user AS (
+                SELECT user_id
+                FROM common_counts
+                ORDER BY cnt DESC
+                LIMIT 1
             ),
             recommended_films AS (
-                SELECT DISTINCT fl.film_id
-                FROM film_likes fl
-                JOIN best_users bu ON fl.user_id = bu.user_id
-                WHERE fl.film_id NOT IN (SELECT film_id FROM user_likes)
+                SELECT DISTINCT l2.film_id
+                FROM film_likes l2
+                JOIN best_user bu ON l2.user_id = bu.user_id
+                WHERE l2.film_id NOT IN (SELECT film_id FROM user_likes)
             )
             SELECT
                 f.film_id AS film_id,
@@ -235,7 +231,7 @@ public class FilmRepository extends BaseRepository<Film> {
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
             LEFT JOIN directors d ON fd.director_id = d.director_id
             WHERE f.film_id IN (SELECT film_id FROM recommended_films)
-            ORDER BY f.film_id
+            ORDER BY f.film_id;
             """;
 
     // Логгер
