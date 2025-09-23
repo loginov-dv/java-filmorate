@@ -192,39 +192,26 @@ public class FilmRepository extends BaseRepository<Film> {
                 SELECT film_id
                 FROM film_likes
                 WHERE user_id = ?
-            ),
-            common_counts AS (
-                SELECT l2.user_id, COUNT(DISTINCT l1.film_id) AS cnt
-                FROM film_likes l1
-                JOIN film_likes l2 ON l1.film_id = l2.film_id
-                WHERE l1.user_id = ? AND l2.user_id <> ?
-                GROUP BY l2.user_id
-            ),
-            recommended_films AS (
-                SELECT DISTINCT l2.film_id
-                FROM film_likes l2
-                JOIN common_counts c ON l2.user_id = c.user_id
-                WHERE l2.film_id NOT IN (SELECT film_id FROM user_likes)
             )
-            SELECT
-                f.film_id AS film_id,
-                f.name AS film_name,
-                f.description AS film_description,
-                f.release_date AS film_release_date,
-                f.duration AS film_duration,
-                r.rating_id AS rating_id,
-                r.name AS rating_name,
-                g.genre_id AS genre_id,
-                g.name AS genre_name,
-                d.director_id AS director_id,
-                d.name AS director_name
-            FROM films f
+            SELECT f.film_id, f.name, f.description, f.release_date, f.duration,
+                   r.rating_id, r.name AS rating_name,
+                   g.genre_id, g.name AS genre_name,
+                   d.director_id, d.name AS director_name
+            FROM film_likes fl
+            JOIN films f ON fl.film_id = f.film_id
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
             LEFT JOIN film_directors fd ON f.film_id = fd.film_id
-            LEFT JOIN directors d ON fd.director_id = d.director_id  -- Исправлено!
-            WHERE f.film_id IN (SELECT film_id FROM recommended_films)
+            LEFT JOIN directors d ON fd.director_id = d.director_id
+            WHERE fl.user_id IN (
+                SELECT l2.user_id
+                FROM film_likes l1
+                JOIN film_likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ? AND l2.user_id <> ?
+            )
+            AND f.film_id NOT IN (SELECT film_id FROM user_likes)
+            GROUP BY f.film_id, r.rating_id, r.name, g.genre_id, g.name, d.director_id, d.name
             ORDER BY f.film_id;
             """;
 
