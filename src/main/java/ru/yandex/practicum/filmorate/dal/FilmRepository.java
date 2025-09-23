@@ -194,16 +194,16 @@ public class FilmRepository extends BaseRepository<Film> {
                 WHERE user_id = ?
             ),
             common_counts AS (
-                SELECT l2.user_id, COUNT(*) AS cnt
+                SELECT l2.user_id, COUNT(DISTINCT l1.film_id) AS cnt
                 FROM film_likes l1
                 JOIN film_likes l2 ON l1.film_id = l2.film_id
-                WHERE l1.user_id = ? AND l1.user_id <> l2.user_id
+                WHERE l1.user_id = ? AND l2.user_id <> ?
                 GROUP BY l2.user_id
                 ORDER BY cnt DESC
                 LIMIT 1
             ),
             recommended_films AS (
-                SELECT l2.film_id
+                SELECT DISTINCT l2.film_id
                 FROM film_likes l2
                 JOIN common_counts c ON l2.user_id = c.user_id
                 WHERE l2.film_id NOT IN (SELECT film_id FROM user_likes)
@@ -408,7 +408,7 @@ public class FilmRepository extends BaseRepository<Film> {
 
     public List<Film> getRecommendations(int userId) {
         logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
-        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
     }
 
     private String createPlaceholders(int count) {
