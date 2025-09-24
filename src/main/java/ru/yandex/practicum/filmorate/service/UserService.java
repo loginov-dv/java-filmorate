@@ -19,6 +19,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.model.events.Event;
 import ru.yandex.practicum.filmorate.model.events.EventType;
 import ru.yandex.practicum.filmorate.model.events.Operation;
+import ru.yandex.practicum.filmorate.util.StringUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -78,7 +79,8 @@ public class UserService {
         }
 
         User user = UserMapper.mapToUser(request);
-        if (user.getName() == null) {
+        // TODO: мб стоит это перенести в маппер
+        if (StringUtils.isNullOrEmpty(user.getName())) {
             user.setName(user.getLogin());
         }
         user = userRepository.create(user);
