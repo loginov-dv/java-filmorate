@@ -25,6 +25,7 @@ public class UpdateFilmRequest {
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private Integer duration;
     private Set<DirectorIdDto> directors;
+    private MpaIdDto mpa;
 
     public boolean hasName() {
         return name != null;
@@ -44,5 +45,9 @@ public class UpdateFilmRequest {
 
     public boolean hasDirectors() {
         return directors != null;
+    }
+
+    public boolean hasMpa() {
+        return mpa != null;
     }
 }
