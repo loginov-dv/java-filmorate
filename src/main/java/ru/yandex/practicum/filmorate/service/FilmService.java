@@ -152,8 +152,20 @@ public class FilmService {
             mpaRating = maybeRating.get();
         }
 
+        Set<Genre> genres = new HashSet<>();
+        if (request.hasGenres()) {
+            for (GenreIdDto genreIdDto : request.getGenres()) {
+                Optional<Genre> maybeGenre = genreRepository.getById(genreIdDto.getId());
+                if (maybeGenre.isEmpty()) {
+                    logger.warn("Жанр с id = {} не найден", genreIdDto.getId());
+                    throw new NotFoundException("Жанр с id = " + genreIdDto.getId() + " не найден");
+                }
+                genres.add(maybeGenre.get());
+            }
+        }
+
         logger.debug("Исходное состояние: {}", maybeFilm.get());
-        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request, directors, mpaRating);
+        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request, directors, mpaRating, genres);
         updatedFilm = filmRepository.update(updatedFilm);
 
         logger.info("Изменён фильм: {}", updatedFilm);
@@ -175,8 +187,9 @@ public class FilmService {
         }
         if (filmRepository.getLikesUserId(filmId).contains(userId)) {
             logger.warn("Пользователь с id = {} уже поставил лайк фильму с id = {}", userId, filmId);
-            throw new ValidationException("Пользователь с id = " + userId +
-                    " уже поставил лайк фильму с id = " + filmId);
+            // Повторная попытка тоже должна попадать в события
+            eventRepository.create(new Event(userId, filmId, EventType.LIKE, Operation.ADD));
+            return;
         }
 
         filmRepository.putLike(filmId, userId);
