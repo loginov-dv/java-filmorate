@@ -65,7 +65,7 @@ public class FilmRepository extends BaseRepository<Film> {
             "(name, description, release_date, duration, rating_id) " +
             "VALUES(?, ?, ?, ?, ?)";
     private static final String UPDATE_QUERY = "UPDATE films " +
-            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE film_id = ?";
+            "SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE film_id = ?";
     private static final String INSERT_FILM_LIKES_QUERY = "INSERT INTO film_likes(film_id, user_id) " +
             "VALUES(?, ?)";
     private static final String DELETE_FROM_FILM_LIKES_QUERY = "DELETE FROM film_likes " +
@@ -288,6 +288,7 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
+                film.getRating().getId(),
                 film.getId());
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
 
