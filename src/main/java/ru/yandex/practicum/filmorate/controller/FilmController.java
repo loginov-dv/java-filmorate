@@ -115,7 +115,7 @@ public class FilmController {
     @GetMapping("/common")
     public List<FilmDto> getCommon(@RequestParam int userId,
                                    @RequestParam int friendId) {
-        logger.debug("Вызов эндпоинта GET /films/common?userId={userId}&friendId={friendId}");
+        logger.debug("Вызов эндпоинта GET /films/common?userId={}&friendId={}", userId, friendId);
         return filmService.getCommon(userId, friendId);
     }
 }
