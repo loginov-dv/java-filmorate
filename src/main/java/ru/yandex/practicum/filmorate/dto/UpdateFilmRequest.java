@@ -26,6 +26,7 @@ public class UpdateFilmRequest {
     private Integer duration;
     private Set<DirectorIdDto> directors;
     private MpaIdDto mpa;
+    private Set<GenreIdDto> genres;
 
     public boolean hasName() {
         return name != null;
@@ -49,5 +50,9 @@ public class UpdateFilmRequest {
 
     public boolean hasMpa() {
         return mpa != null;
+    }
+
+    public boolean hasGenres() {
+        return genres != null;
     }
 }
