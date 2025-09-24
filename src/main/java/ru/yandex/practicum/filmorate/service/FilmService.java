@@ -142,8 +142,18 @@ public class FilmService {
             }
         }
 
+        MpaRating mpaRating = null;
+        if (request.hasMpa()) {
+            Optional<MpaRating> maybeRating = mpaRepository.getById(request.getMpa().getId());
+            if (maybeRating.isEmpty()) {
+                logger.warn("Рейтинг с id = {} не найден", request.getMpa().getId());
+                throw new NotFoundException("Рейтинг с id = " + request.getMpa().getId() + " не найден");
+            }
+            mpaRating = maybeRating.get();
+        }
+
         logger.debug("Исходное состояние: {}", maybeFilm.get());
-        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request, directors);
+        Film updatedFilm = FilmMapper.updateFilmFields(maybeFilm.get(), request, directors, mpaRating);
         updatedFilm = filmRepository.update(updatedFilm);
 
         logger.info("Изменён фильм: {}", updatedFilm);
