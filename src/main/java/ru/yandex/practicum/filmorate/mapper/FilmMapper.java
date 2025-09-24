@@ -9,6 +9,7 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,7 +63,7 @@ public final class FilmMapper {
 
     // Обновить поля объекта класса Film
     public static Film updateFilmFields(Film film, UpdateFilmRequest request,
-                                        Set<Director> directors, MpaRating mpa) {
+                                        Set<Director> directors, MpaRating mpa, Set<Genre> genres) {
         if (request.hasName()) {
             film.setName(request.getName());
         }
@@ -81,10 +82,17 @@ public final class FilmMapper {
 
         if (request.hasDirectors()) {
             film.setDirectors(directors);
+        } else {
+            // Если приходит directors = null, значит нужно удалить всех режиссёров
+            film.setDirectors(new HashSet<>());
         }
 
         if (request.hasMpa()) {
             film.setRating(mpa);
+        }
+
+        if (request.hasGenres()) {
+            film.setGenres(genres);
         }
 
         return film;
