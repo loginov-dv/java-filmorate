@@ -4,6 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.dal.*;
+import ru.yandex.practicum.filmorate.dto.*;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.filmorate.dal.*;
 import ru.yandex.practicum.filmorate.dto.*;
@@ -281,6 +283,34 @@ public class FilmService {
 
         logger.info("Найдено фильмов по поиску: {}", films.size());
         return films.stream().map(FilmMapper::mapToFilmDto).collect(Collectors.toList());
+    }
+
+    public List<FilmDto> getCommon(int userId, int friendId) {
+        logger.debug("Запрос на получение общих фильмов друзей с id = {} и id = {}",
+                userId, friendId);
+
+        if (userRepository.getById(userId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
+        if (userRepository.getById(friendId).isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", friendId);
+            throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
+        }
+
+        List<Integer> userFilmsIds = filmRepository.getFilmLikesByUserId(userId);
+        List<Integer> friendsFilmsIds = filmRepository.getFilmLikesByUserId(friendId);
+
+        return userFilmsIds.stream()
+                .filter(friendsFilmsIds::contains)
+                .map(filmRepository::getById)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparingInt((Film film) -> filmRepository.getLikesUserId(film.getId()).size())
+                        .reversed())
+                .map(FilmMapper::mapToFilmDto)
+                .collect(Collectors.toList());
     }
 
     // Разбор и нормализация значения by

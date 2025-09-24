@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateFilmRequest;
@@ -110,5 +109,13 @@ public class FilmController {
                                 @RequestParam String by) {
         logger.debug("Вызов эндпоинта GET /films/search");
         return filmService.search(query, by);
+    }
+
+    // Эндпоинт GET /films/common?userId={userId}&friendId={friendId}
+    @GetMapping("/common")
+    public List<FilmDto> getCommon(@RequestParam int userId,
+                                   @RequestParam int friendId) {
+        logger.debug("Вызов эндпоинта GET /films/common?userId={}&friendId={}", userId, friendId);
+        return filmService.getCommon(userId, friendId);
     }
 }
