@@ -109,6 +109,11 @@ class FilmRepositoryTest {
         updatedFilm.setReleaseDate(LocalDate.of(2000, 1, 1));
         updatedFilm.setDuration(30);
 
+        MpaRating rating = new MpaRating();
+        rating.setId(1);
+
+        updatedFilm.setRating(rating);
+
         filmRepository.update(updatedFilm);
 
         Optional<Film> maybeFilm = filmRepository.getById(updatedFilm.getId());
