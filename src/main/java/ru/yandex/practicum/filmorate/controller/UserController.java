@@ -6,9 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.dto.NewUserRequest;
-import ru.yandex.practicum.filmorate.dto.UpdateUserRequest;
-import ru.yandex.practicum.filmorate.dto.UserDto;
+import ru.yandex.practicum.filmorate.dto.*;
 import ru.yandex.practicum.filmorate.service.UserService;
 
 import java.util.List;
@@ -86,6 +84,19 @@ public class UserController {
                                           @PathVariable int otherId) {
         logger.debug("Вызов эндпоинта GET /users/{id}/friends/common/{otherId}");
         return userService.getCommonFriends(id, otherId);
+    }
+
+    // Эндпоинт GET /users/{id}/feed
+    @GetMapping("/{id}/feed")
+    public List<EventDto> getFeed(@PathVariable int id) {
+        logger.debug("Вызов эндпоинта GET /users/{id}/feed");
+        return userService.getFeed(id);
+    }
+
+    @GetMapping("/{id}/recommendations")
+    public List<FilmDto> getRecommendations(@PathVariable int id) {
+        logger.debug("Вызов эндпоинта GET /users/{id}/recommendations");
+        return userService.getRecommendations(id);
     }
 
     @DeleteMapping("/{userId}")

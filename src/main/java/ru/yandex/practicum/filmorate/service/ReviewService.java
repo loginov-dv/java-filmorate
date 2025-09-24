@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.dal.EventRepository;
 import ru.yandex.practicum.filmorate.dal.FilmRepository;
 import ru.yandex.practicum.filmorate.dal.ReviewRepository;
 import ru.yandex.practicum.filmorate.dal.UserRepository;
@@ -11,8 +12,12 @@ import ru.yandex.practicum.filmorate.dto.UpdateReviewRequest;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
 import ru.yandex.practicum.filmorate.mapper.ReviewMapper;
 import ru.yandex.practicum.filmorate.model.Review;
+import ru.yandex.practicum.filmorate.model.events.Event;
+import ru.yandex.practicum.filmorate.model.events.EventType;
+import ru.yandex.practicum.filmorate.model.events.Operation;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -23,6 +28,7 @@ public class ReviewService {
     private final ReviewRepository reviewRepository;
     private final FilmRepository filmRepository;
     private final UserRepository userRepository;
+    private final EventRepository eventRepository;
 
     // Создание нового отзыва
     @Transactional
@@ -35,7 +41,12 @@ public class ReviewService {
         filmRepository.getById(review.getFilmId())
                 .orElseThrow(() -> new NotFoundException("Фильм с id = " + review.getFilmId() + " не найден"));
 
-        return reviewRepository.create(review);
+        Review newReview = reviewRepository.create(review);
+
+        eventRepository.create(new Event(newReview.getUserId(), newReview.getReviewId(),
+                EventType.REVIEW, Operation.ADD));
+
+        return newReview;
     }
 
     // Обновление отзыва
@@ -49,6 +60,10 @@ public class ReviewService {
                 .orElseThrow(() -> new NotFoundException("Отзыв с id = " + request.getReviewId() + " не найден"));
 
         ReviewMapper.updateReviewFields(existing, request);
+
+        eventRepository.create(new Event(existing.getUserId(), existing.getReviewId(),
+                EventType.REVIEW, Operation.UPDATE));
+
         return reviewRepository.update(existing);
     }
 
@@ -56,8 +71,18 @@ public class ReviewService {
     @Transactional
     public void delete(int id) {
         log.debug("Запрос на удаление отзыва id={}", id);
-        reviewRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Отзыв с id = " + id + " не найден"));
+
+        Optional<Review> maybeReview = reviewRepository.findById(id);
+
+        if (maybeReview.isEmpty()) {
+            throw new NotFoundException("Отзыв с id = " + id + " не найден");
+        }
+
+        Review review = maybeReview.get();
+
+        eventRepository.create(new Event(review.getUserId(), review.getReviewId(),
+                EventType.REVIEW, Operation.REMOVE));
+
         reviewRepository.delete(id);
     }
 

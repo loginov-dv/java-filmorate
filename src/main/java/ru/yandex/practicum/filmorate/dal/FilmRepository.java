@@ -187,6 +187,40 @@ public class FilmRepository extends BaseRepository<Film> {
             WHERE ( :titleCond ) OR ( :directorCond )
             ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
             """;
+    private static final String GET_RECOMMENDED_FILMS_QUERY = """
+            WITH user_likes AS (
+                SELECT film_id
+                FROM film_likes
+                WHERE user_id = ?
+            )
+            SELECT f.film_id,
+                   f.name AS film_name,
+                   f.description AS film_description,
+                   f.release_date AS film_release_date,
+                   f.duration AS film_duration,
+                   r.rating_id,
+                   r.name AS rating_name,
+                   g.genre_id,
+                   g.name AS genre_name,
+                   d.director_id,
+                   d.name AS director_name
+            FROM film_likes fl
+            JOIN films f ON fl.film_id = f.film_id
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors fd ON f.film_id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.director_id
+            WHERE fl.user_id IN (
+                SELECT l2.user_id
+                FROM film_likes l1
+                JOIN film_likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ? AND l2.user_id <> ?
+            )
+            AND f.film_id NOT IN (SELECT film_id FROM user_likes)
+            GROUP BY f.film_id, r.rating_id, r.name, g.genre_id, g.name, d.director_id, d.name
+            ORDER BY f.film_id;
+            """;
 
     private static final String GET_FILMS_ID_BY_USER_ID_QUERY = "SELECT film_id FROM film_likes WHERE user_id = ?";
     // Логгер
@@ -368,6 +402,11 @@ public class FilmRepository extends BaseRepository<Film> {
     public List<Integer> getFilmLikesByUserId(int userId) {
         logger.debug("Запрос на получение всех film_id из таблицы film_likes для user_id = {}", userId);
         return super.findManyInts(GET_FILMS_ID_BY_USER_ID_QUERY, userId);
+    }
+
+    public List<Film> getRecommendations(int userId) {
+        logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
     }
 
     private String createPlaceholders(int count) {
