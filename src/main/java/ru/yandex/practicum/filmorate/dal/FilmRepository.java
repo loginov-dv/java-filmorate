@@ -11,10 +11,7 @@ import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // Класс-репозиторий для работы с таблицей "films"
@@ -94,20 +91,20 @@ public class FilmRepository extends BaseRepository<Film> {
               r.name AS rating_name,
               g.genre_id AS genre_id,
               g.name AS genre_name,
+              d.director_id AS director_id,
+              d.name AS director_name,
               p.likes AS likes_count
             FROM films f
             LEFT JOIN ratings r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres fg ON f.film_id = fg.film_id
             LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
+            LEFT JOIN directors AS d ON fd.director_id = d.director_id
             JOIN popular p ON f.film_id = p.film_id
             ORDER BY p.likes DESC
             """;
-
-
     private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
-
     private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE film_id = ?";
-
     private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
             "WHERE film_id = ?";
     private static final String GET_DIRECTORS_FILMS_ORDERED_BY_YEAR = """
@@ -157,7 +154,6 @@ public class FilmRepository extends BaseRepository<Film> {
             GROUP BY film_id, genre_id, director_id
             ORDER BY COUNT(fl.user_id) DESC
             """;
-
     private static final String SEARCH_BY_TITLE_OR_DIRECTOR_QUERY = """
             WITH likes AS (
                 SELECT film_id, COUNT(*) AS cnt
@@ -221,8 +217,9 @@ public class FilmRepository extends BaseRepository<Film> {
             GROUP BY f.film_id, r.rating_id, r.name, g.genre_id, g.name, d.director_id, d.name
             ORDER BY f.film_id;
             """;
-
     private static final String GET_FILMS_ID_BY_USER_ID_QUERY = "SELECT film_id FROM film_likes WHERE user_id = ?";
+    private static final String GET_FILM_GENRES_QUERY = "SELECT genre_id FROM film_genres " +
+            "WHERE film_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -292,37 +289,64 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getId());
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
 
-        List<Integer> oldDirectors = super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId());
-        List<Integer> newDirectors = film.getDirectors().stream().map(Director::getId).collect(Collectors.toList());
+        Map<String, List<Integer>> directorsDiff = findDiff(super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId()),
+                film.getDirectors().stream().map(Director::getId).collect(Collectors.toList()));
 
-        List<Integer> directorsToRemove = oldDirectors.stream()
-                .filter(item -> !newDirectors.contains(item))
-                .collect(Collectors.toList());
-        List<Integer> directorsToAdd = newDirectors.stream()
-                .filter(item -> !oldDirectors.contains(item))
-                .collect(Collectors.toList());
-
-        if (!directorsToRemove.isEmpty()) {
+        if (!directorsDiff.get("removed").isEmpty()) {
+            List<Integer> removed = directorsDiff.get("removed");
+            logger.debug("to remove: {}", removed);
             String query = "DELETE FROM film_directors WHERE film_id = ? " +
-                    "AND director_id IN (" + createPlaceholders(directorsToRemove.size()) + ")";
+                    "AND director_id IN (" + createPlaceholders(removed.size()) + ")";
+            logger.debug("query: {}", query);
             List<Integer> params = new ArrayList<>();
             params.add(film.getId());
-            params.addAll(directorsToRemove);
-
-            update(query, params);
+            params.addAll(removed);
+            logger.debug("params: {}", params);
+            update(query, params.toArray());
             logger.debug("Удалены строки из таблицы film_directors, где film_id = {} и directors_id = {}",
-                    film.getId(), directorsToRemove);
+                    film.getId(), removed);
         }
 
-        if (!directorsToAdd.isEmpty()) {
-            List<String> directorValues = directorsToAdd.stream()
+        if (!directorsDiff.get("added").isEmpty()) {
+            List<Integer> added = directorsDiff.get("added");
+            List<String> directorValues = added.stream()
                     .map(directorId -> "(" + film.getId() + ", " + directorId + ")")
                     .toList();
             insertWithoutKey("INSERT INTO film_directors(film_id, director_id) VALUES "
                     + String.join(", ", directorValues));
 
             logger.debug("Добавлены строки в таблицу film_directors, где film_id = {} и directors_id = {}",
-                    film.getId(), directorsToAdd);
+                    film.getId(), added);
+        }
+
+        Map<String, List<Integer>> genresDiff = findDiff(super.findManyInts(GET_FILM_GENRES_QUERY, film.getId()),
+                film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()));
+
+        if (!genresDiff.get("removed").isEmpty()) {
+            List<Integer> removed = genresDiff.get("removed");
+            logger.debug("to remove: {}", removed);
+            String query = "DELETE FROM film_genres WHERE film_id = ? " +
+                    "AND genre_id IN (" + createPlaceholders(removed.size()) + ")";
+            logger.debug("query: {}", query);
+            List<Integer> params = new ArrayList<>();
+            params.add(film.getId());
+            params.addAll(removed);
+            logger.debug("params: {}", params);
+            update(query, params.toArray());
+            logger.debug("Удалены строки из таблицы film_genres, где film_id = {} и genre_id = {}",
+                    film.getId(), removed);
+        }
+
+        if (!genresDiff.get("added").isEmpty()) {
+            List<Integer> added = genresDiff.get("added");
+            List<String> addedValues = added.stream()
+                    .map(directorId -> "(" + film.getId() + ", " + directorId + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_genres(film_id, genre_id) VALUES "
+                    + String.join(", ", addedValues));
+
+            logger.debug("Добавлены строки в таблицу film_genres, где film_id = {} и genre_id = {}",
+                    film.getId(), added);
         }
 
         return film;
@@ -412,5 +436,22 @@ public class FilmRepository extends BaseRepository<Film> {
 
     private String createPlaceholders(int count) {
         return String.join(",", Collections.nCopies(count, "?"));
+    }
+
+    private static <T> Map<String, List<T>> findDiff(List<T> list1, List<T> list2) {
+        Map<String, List<T>> diff = new HashMap<>();
+
+        // Добавлено
+        List<T> added = new ArrayList<>(list2);
+        added.removeAll(list1);
+
+        // Удалено
+        List<T> removed = new ArrayList<>(list1);
+        removed.removeAll(list2);
+
+        diff.put("added", added);
+        diff.put("removed", removed);
+
+        return diff;
     }
 }
