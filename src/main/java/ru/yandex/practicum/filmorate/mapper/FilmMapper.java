@@ -62,7 +62,7 @@ public final class FilmMapper {
 
     // Обновить поля объекта класса Film
     public static Film updateFilmFields(Film film, UpdateFilmRequest request,
-                                        Set<Director> directors) {
+                                        Set<Director> directors, MpaRating mpa) {
         if (request.hasName()) {
             film.setName(request.getName());
         }
@@ -81,6 +81,10 @@ public final class FilmMapper {
 
         if (request.hasDirectors()) {
             film.setDirectors(directors);
+        }
+
+        if (request.hasMpa()) {
+            film.setRating(mpa);
         }
 
         return film;
