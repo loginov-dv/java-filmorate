@@ -58,6 +58,7 @@ public class DirectorController {
 
     // Эндпоинт DELETE /directors/{id}
     @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable @Positive int id) {
         logger.debug("Вызов эндпоинта DELETE /directors/{id}");
         directorService.removeById(id);
