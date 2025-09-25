@@ -23,7 +23,6 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
-
     // final-поля будут инжектиться через сгенерированный конструктор
     private final ReviewRepository reviewRepository;
     private final FilmRepository filmRepository;
