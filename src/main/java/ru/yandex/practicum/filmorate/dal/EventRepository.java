@@ -10,7 +10,6 @@ import ru.yandex.practicum.filmorate.model.events.Event;
 import java.sql.Timestamp;
 import java.util.List;
 
-// Репозиторий для событий
 @Slf4j
 @Repository
 public class EventRepository extends BaseRepository<Event> {
@@ -18,7 +17,7 @@ public class EventRepository extends BaseRepository<Event> {
     private static final String INSERT_QUERY = "INSERT INTO events(user_id, timestamp, entity_id, type, operation) " +
             "VALUES (?, ?, ?, ?, ?)";
     private static final String GET_FEED_BY_USER_ID = """
-            SElECT event_id,
+            SELECT event_id,
                 timestamp,
                 user_id,
                 entity_id,
