@@ -17,10 +17,7 @@ public final class DirectorMapper {
     }
 
     public static Director updateDirectorFields(Director director, UpdateDirectorRequest request) {
-        if (request.hasName()) {
-            director.setName(request.getName());
-        }
-
+        director.setName(request.getName());
         return director;
     }
 }
