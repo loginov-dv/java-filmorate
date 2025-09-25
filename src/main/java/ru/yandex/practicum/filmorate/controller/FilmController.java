@@ -1,10 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.FilmDto;
 import ru.yandex.practicum.filmorate.dto.NewFilmRequest;
@@ -14,16 +16,14 @@ import ru.yandex.practicum.filmorate.service.FilmService;
 
 import java.util.List;
 
-// Контроллер для работы с фильмами
+@Validated
 @RestController
 @RequestMapping("/films")
 public class FilmController {
-    // Сервис работы с фильмами
     private final FilmService filmService;
+    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
     // Параметры сортировки
     private final List<String> sortParameters = List.of("year", "likes");
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(FilmController.class);
 
     @Autowired
     public FilmController(FilmService filmService) {
@@ -39,7 +39,7 @@ public class FilmController {
 
     // Эндпоинт GET /films/{id}
     @GetMapping("/{id}")
-    public FilmDto getById(@PathVariable int id) {
+    public FilmDto getById(@PathVariable @Positive int id) {
         logger.debug("Вызов эндпоинта GET /films/{id}");
         return filmService.getById(id);
     }
@@ -61,24 +61,24 @@ public class FilmController {
 
     // Эндпоинт PUT /films/{id}/like/{userId}
     @PutMapping("/{id}/like/{userId}")
-    public void putLike(@PathVariable int id,
-                        @PathVariable int userId) {
+    public void putLike(@PathVariable @Positive int id,
+                        @PathVariable @Positive int userId) {
         logger.debug("Вызов эндпоинта PUT /films/{id}/like/{userId}");
         filmService.putLike(id, userId);
     }
 
     // Эндпоинт DELETE /films/{id}/like/{userId}
     @DeleteMapping("/{id}/like/{userId}")
-    public void removeLike(@PathVariable int id,
-                           @PathVariable int userId) {
+    public void removeLike(@PathVariable @Positive int id,
+                           @PathVariable @Positive int userId) {
         logger.debug("Вызов эндпоинта DELETE /films/{id}/like/{userId}");
         filmService.removeLike(id, userId);
     }
 
     // Эндпоинт GET /films/popular/
     @GetMapping("/popular")
-    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") int count,
-                                    @RequestParam(required = false) Integer genreId,
+    public List<FilmDto> getPopular(@RequestParam(defaultValue = "10") @Positive int count,
+                                    @RequestParam(required = false) @Positive Integer genreId,
                                     @RequestParam(required = false) Integer year) {
         logger.debug("Вызов эндпоинта GET /films/popular/");
         return filmService.getPopular(count, genreId, year);
@@ -86,14 +86,14 @@ public class FilmController {
 
     // Эндпоинт DELETE /films/{filmId}
     @DeleteMapping("/{filmId}")
-    public void deleteFilm(@PathVariable int filmId) {
+    public void deleteFilm(@PathVariable @Positive int filmId) {
         logger.debug("Вызов эндпоинта DELETE /films/{filmId}");
         filmService.removeFilmById(filmId);
     }
 
     // Эндпоинт GET /films/director/{directorId}?sortBy=[year,likes]
     @GetMapping("/director/{directorId}")
-    public List<FilmDto> getDirectorsFilm(@PathVariable int directorId,
+    public List<FilmDto> getDirectorsFilm(@PathVariable @Positive int directorId,
                                           @RequestParam String sortBy) {
         logger.debug("Вызов эндпоинта GET /films/director/{directorId}?sortBy=[year,likes]");
         if (!sortParameters.contains(sortBy)) {
@@ -113,8 +113,8 @@ public class FilmController {
 
     // Эндпоинт GET /films/common?userId={userId}&friendId={friendId}
     @GetMapping("/common")
-    public List<FilmDto> getCommon(@RequestParam int userId,
-                                   @RequestParam int friendId) {
+    public List<FilmDto> getCommon(@RequestParam @Positive int userId,
+                                   @RequestParam @Positive int friendId) {
         logger.debug("Вызов эндпоинта GET /films/common?userId={}&friendId={}", userId, friendId);
         return filmService.getCommon(userId, friendId);
     }
