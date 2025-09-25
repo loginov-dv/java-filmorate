@@ -47,9 +47,9 @@ public class UserRepository extends BaseRepository<User> {
             "SET email = ?, login = ?, name = ?, birthday = ? WHERE user_id = ?";
     private static final String FIND_FRIENDS_QUERY = """
             SELECT u.user_id,
-                u.email, 
-                u.login, 
-                u.name, 
+                u.email,
+                u.login,
+                u.name,
                 u.birthday
             FROM friendships AS f JOIN users AS u ON f.friend_id = u.user_id
             WHERE f.user_id = ?
