@@ -11,16 +11,12 @@ import ru.yandex.practicum.filmorate.model.MpaRating;
 import java.util.List;
 import java.util.Optional;
 
-// Класс-репозиторий для работы с таблицей "ratings"
 @Repository
 public class MpaRepository extends BaseRepository<MpaRating> {
-    // Наименование
-    private static final String TABLE_NAME = "ratings";
-    // Запросы
-    private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE rating_id = ?";
-    // Логгер
     private static final Logger logger = LoggerFactory.getLogger(MpaRepository.class);
+    // Запросы
+    private static final String FIND_ALL_QUERY = "SELECT rating_id, name FROM ratings";
+    private static final String FIND_BY_ID_QUERY = "SELECT rating_id, name FROM ratings WHERE rating_id = ?";
 
     @Autowired
     public MpaRepository(JdbcTemplate jdbcTemplate, RowMapper<MpaRating> rowMapper) {

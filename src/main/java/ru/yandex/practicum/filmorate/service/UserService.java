@@ -257,6 +257,15 @@ public class UserService {
     }
 
     public void removeUserById(int userId) {
+        logger.debug("Запрос на удаление пользователя с id = {}", userId);
+
+        Optional<User> maybeUser = userRepository.getById(userId);
+        if (maybeUser.isEmpty()) {
+            logger.warn("Пользователь с id = {} не найден", userId);
+            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
+        }
+
         userRepository.removeUserById(userId);
+        logger.debug("Удалён пользователь с id = {}", userId);
     }
 }

@@ -11,18 +11,15 @@ import ru.yandex.practicum.filmorate.model.Director;
 import java.util.List;
 import java.util.Optional;
 
-// Класс-репозиторий для работы с таблицей "directors"
 @Repository
 public class DirectorRepository extends BaseRepository<Director> {
+    private static final Logger logger = LoggerFactory.getLogger(DirectorRepository.class);
     // Запросы
-    private static final String FIND_ALL_QUERY = "SELECT * FROM directors";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM directors WHERE director_id = ?";
+    private static final String FIND_ALL_QUERY = "SELECT director_id, name FROM directors";
+    private static final String FIND_BY_ID_QUERY = "SELECT director_id, name FROM directors WHERE director_id = ?";
     private static final String INSERT_QUERY = "INSERT INTO directors(name) VALUES(?)";
     private static final String UPDATE_QUERY = "UPDATE directors SET name = ? WHERE director_id = ?";
     private static final String DELETE_QUERY = "DELETE FROM directors WHERE director_id = ?";
-
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(DirectorRepository.class);
 
     @Autowired
     public DirectorRepository(JdbcTemplate jdbcTemplate, RowMapper<Director> rowMapper) {
@@ -44,7 +41,6 @@ public class DirectorRepository extends BaseRepository<Director> {
         int id = insert(INSERT_QUERY, director.getName());
         logger.debug("Получен новый id = {}", id);
         director.setId(id);
-
         logger.debug("Добавлена строка в таблицу directors с id = {}", id);
         return director;
     }
@@ -52,7 +48,6 @@ public class DirectorRepository extends BaseRepository<Director> {
     public Director update(Director director) {
         logger.debug("Запрос на обновление строки в таблице directors с id = {}", director.getId());
         update(UPDATE_QUERY, director.getName(), director.getId());
-
         logger.debug("Обновлена строка в таблице directors с id = {}", director.getId());
         return director;
     }

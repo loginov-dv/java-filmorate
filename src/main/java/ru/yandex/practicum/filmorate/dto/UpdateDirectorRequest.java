@@ -11,8 +11,4 @@ public class UpdateDirectorRequest {
     private Integer id;
     @NotBlank(message = "Имя не может быть пустым")
     private String name;
-
-    public boolean hasName() {
-        return name != null;
-    }
 }

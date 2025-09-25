@@ -9,12 +9,10 @@ import ru.yandex.practicum.filmorate.model.Review;
 import java.util.List;
 import java.util.Optional;
 
-// Репозиторий для работы с отзывами
 @Slf4j
 @Repository
 public class ReviewRepository extends BaseRepository<Review> {
 
-    // Явный конструктор: передаём зависимости в базовый класс
     public ReviewRepository(JdbcTemplate jdbcTemplate, ReviewRowMapper rowMapper) {
         super(jdbcTemplate, rowMapper);
     }
@@ -31,12 +29,14 @@ public class ReviewRepository extends BaseRepository<Review> {
 
     // Получение отзыва по идентификатору
     public Optional<Review> findById(int id) {
+        log.debug("Запрос на получение строки таблицы reviews с id = {}", id);
         String sql = "SELECT review_id, content, is_positive, user_id, film_id, useful FROM reviews WHERE review_id = ?";
         return findOne(sql, id);
     }
 
     // Получение списка отзывов
     public List<Review> findAllByFilm(Integer filmId, int count) {
+        log.debug("Запрос на получение строк ({}) таблицы reviews для film_id = {}", count, filmId);
         String base = "SELECT review_id, content, is_positive, user_id, film_id, useful FROM reviews";
         if (filmId != null) {
             base += " WHERE film_id = ? ORDER BY useful DESC LIMIT ?";

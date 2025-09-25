@@ -255,7 +255,16 @@ public class FilmService {
 
     // Удалить фильм по id
     public void removeFilmById(int filmId) {
+        logger.debug("Запрос на удаление фильма с id = {}", filmId);
+
+        Optional<Film> maybeFilm = filmRepository.getById(filmId);
+        if (maybeFilm.isEmpty()) {
+            logger.warn("Фильм с id = {} не найден", filmId);
+            throw new NotFoundException("Фильм с id = " + filmId + " не найден");
+        }
+
         filmRepository.removeFilmById(filmId);
+        logger.debug("Удалён фильм с id = {}", filmId);
     }
 
     // Поиск фильмов режиссёра

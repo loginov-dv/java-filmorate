@@ -37,14 +37,14 @@ class ReviewControllerTest {
     ObjectMapper om;
 
     @Test
-    @DisplayName("POST /reviews — создаёт отзыв с useful=0 и возвращает 200")
-    void createReview_returns200() throws Exception {
+    @DisplayName("POST /reviews — создаёт отзыв с useful=0 и возвращает 201")
+    void createReview_returns201() throws Exception {
         String body = "{\"content\":\"Nice movie\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
 
         mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.reviewId", notNullValue()))
                 .andExpect(jsonPath("$.content", is("Nice movie")))
                 .andExpect(jsonPath("$.isPositive", is(true)))
@@ -54,14 +54,14 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("PUT /reviews — обновляет текст/тональность и возвращает 200")
+    @DisplayName("PUT /reviews — обновляет текст/тональность и возвращает 201")
     void updateReview_updatesFields() throws Exception {
         // создаём
         String create = "{\"content\":\"Old\",\"isPositive\":true,\"userId\":1,\"filmId\":1}";
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(create))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
         int id = om.readTree(created).get("reviewId").asInt();
@@ -79,12 +79,12 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("PUT/DELETE like|dislike — корректно меняют рейтинг useful (везде 200)")
+    @DisplayName("PUT /DELETE like|dislike — корректно меняют рейтинг useful (везде 201)")
     void reactions_changeUseful() throws Exception {
         String created = mockMvc.perform(post("/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"content\":\"X\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         int id = om.readTree(created).get("reviewId").asInt();
 
@@ -110,14 +110,14 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /reviews?filmId=... — сортирует по useful по убыванию (200)")
+    @DisplayName("GET /reviews?filmId=... — сортирует по useful по убыванию (201)")
     void listByFilm_sortedByUsefulDesc() throws Exception {
         // r1
         int r1 = om.readTree(
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"content\":\"A\",\"isPositive\":true,\"userId\":1,\"filmId\":1}"))
-                        .andExpect(status().isOk())
+                        .andExpect(status().isCreated())
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 
@@ -126,7 +126,7 @@ class ReviewControllerTest {
                 mockMvc.perform(post("/reviews")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"content\":\"B\",\"isPositive\":false,\"userId\":2,\"filmId\":1}"))
-                        .andExpect(status().isOk())
+                        .andExpect(status().isCreated())
                         .andReturn().getResponse().getContentAsString()
         ).get("reviewId").asInt();
 

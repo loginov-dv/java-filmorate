@@ -1,10 +1,12 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.dto.NewDirectorRequest;
 import ru.yandex.practicum.filmorate.dto.UpdateDirectorRequest;
@@ -13,6 +15,7 @@ import ru.yandex.practicum.filmorate.service.DirectorService;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/directors")
 public class DirectorController {
@@ -33,7 +36,7 @@ public class DirectorController {
 
     // Эндпоинт GET /directors/{id}
     @GetMapping("/{id}")
-    public Director getById(@PathVariable int id) {
+    public Director getById(@PathVariable @Positive int id) {
         logger.debug("Вызов эндпоинта GET /directors/{id}");
         return directorService.getById(id);
     }
@@ -55,7 +58,8 @@ public class DirectorController {
 
     // Эндпоинт DELETE /directors/{id}
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable int id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable @Positive int id) {
         logger.debug("Вызов эндпоинта DELETE /directors/{id}");
         directorService.removeById(id);
     }
