@@ -42,13 +42,14 @@ public class ErrorHandler {
         return new ErrorMessage(String.join(". ", errors));
     }
 
+    // Возникает при ошибках валидации id в контроллерах
     @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.NOT_FOUND) // требования в тестах
     public ErrorMessage handleConstraintViolationException(final ConstraintViolationException ex) {
         // Собираем все ошибки
         List<String> errors = ex.getConstraintViolations().stream()
-                .map(violation -> violation.getMessage() + ": "
-                        + violation.getPropertyPath().toString())
+                .map(violation -> violation.getPropertyPath().toString()
+                        + " " + violation.getMessage())
                 .collect(Collectors.toList());
 
         return new ErrorMessage(String.join(". ", errors));
