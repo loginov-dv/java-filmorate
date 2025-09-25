@@ -86,6 +86,7 @@ public class FilmController {
 
     // Эндпоинт DELETE /films/{filmId}
     @DeleteMapping("/{filmId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteFilm(@PathVariable @Positive int filmId) {
         logger.debug("Вызов эндпоинта DELETE /films/{filmId}");
         filmService.removeFilmById(filmId);
