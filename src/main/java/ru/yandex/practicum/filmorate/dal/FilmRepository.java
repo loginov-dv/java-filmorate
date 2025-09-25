@@ -14,7 +14,6 @@ import ru.yandex.practicum.filmorate.model.Genre;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// Класс-репозиторий для работы с таблицей "films"
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
     // Запросы
