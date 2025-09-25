@@ -33,7 +33,6 @@ public class DirectorService {
         logger.debug("Запрос на получение режиссёра с id = {}", id);
 
         Optional<Director> maybeDirector = directorRepository.getById(id);
-
         if (maybeDirector.isEmpty()) {
             logger.warn("Режиссёр с id = {} не найден", id);
             throw new NotFoundException("Режиссёр с id = " + id + " не найден");
@@ -57,13 +56,7 @@ public class DirectorService {
         logger.debug("Запрос на изменение режиссёра с id = {}", request.getId());
         logger.debug("Входные данные: {}", request);
 
-        if (request.getId() == null) {
-            logger.warn("Не указан id");
-            throw new NotFoundException("Не указан id");
-        }
-
         Optional<Director> maybeDirector = directorRepository.getById(request.getId());
-
         if (maybeDirector.isEmpty()) {
             logger.warn("Режиссёр с id = {} не найден", request.getId());
             throw new NotFoundException("Режиссёр с id = " + request.getId() + " не найден");
@@ -83,7 +76,6 @@ public class DirectorService {
         logger.debug("Запрос на удаление режиссёра с id = {}", id);
 
         Optional<Director> maybeDirector = directorRepository.getById(id);
-
         if (maybeDirector.isEmpty()) {
             logger.warn("Режиссёр с id = {} не найден", id);
             throw new NotFoundException("Режиссёр с id = " + id + " не найден");
