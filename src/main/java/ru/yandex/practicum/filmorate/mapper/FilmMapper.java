@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.mapper;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.yandex.practicum.filmorate.dto.*;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.model.MpaRating;
 
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,27 +28,26 @@ public final class FilmMapper {
 
         dto.setMpa(film.getRating());
 
-        /*MpaIdDto mpaIdDto = new MpaIdDto();
-        mpaIdDto.setId(film.getRating().getId());
-        dto.setMpa(mpaIdDto);*/
-
-        if (film.getGenres() != null) {
+        if (!film.getGenres().isEmpty()) {
             Set<Genre> genres = film.getGenres().stream()
                     .sorted(Comparator.comparingInt(Genre::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
             dto.setGenres(genres);
-            /*Set<GenreIdDto> genres = film.getGenres().stream()
-                    .map(GenreMapper::mapToGenreIdDto)
-                    .sorted(Comparator.comparingInt(GenreIdDto::getId))
+        }
+
+        if (!film.getDirectors().isEmpty()) {
+            Set<Director> directors = film.getDirectors().stream()
+                    .sorted(Comparator.comparingInt(Director::getId))
                     .collect(Collectors.toCollection(LinkedHashSet::new));
-            dto.setGenres(genres);*/
+            dto.setDirectors(directors);
         }
 
         return dto;
     }
 
     // Преобразовать NewFilmRequest в Film
-    public static Film mapToFilm(NewFilmRequest request, MpaRating mpaRating, Set<Genre> genres) {
+    public static Film mapToFilm(NewFilmRequest request, MpaRating mpaRating,
+                                 Set<Genre> genres, Set<Director> directors) {
         Film film = new Film();
         film.setName(request.getName());
         film.setDescription(request.getDescription());
@@ -55,12 +56,14 @@ public final class FilmMapper {
 
         film.setRating(mpaRating);
         film.setGenres(genres);
+        film.setDirectors(directors);
 
         return film;
     }
 
     // Обновить поля объекта класса Film
-    public static Film updateFilmFields(Film film, UpdateFilmRequest request) {
+    public static Film updateFilmFields(Film film, UpdateFilmRequest request,
+                                        Set<Director> directors, MpaRating mpa, Set<Genre> genres) {
         if (request.hasName()) {
             film.setName(request.getName());
         }
@@ -75,6 +78,21 @@ public final class FilmMapper {
 
         if (request.hasDuration()) {
             film.setDuration(request.getDuration());
+        }
+
+        if (request.hasDirectors()) {
+            film.setDirectors(directors);
+        } else {
+            // Если приходит directors = null, значит нужно удалить всех режиссёров
+            film.setDirectors(new HashSet<>());
+        }
+
+        if (request.hasMpa()) {
+            film.setRating(mpa);
+        }
+
+        if (request.hasGenres()) {
+            film.setGenres(genres);
         }
 
         return film;

@@ -8,5 +8,5 @@ import lombok.NonNull;
 public class ErrorMessage {
     // Текст сообщения
     @NonNull
-    private String message;
+    private String error;
 }

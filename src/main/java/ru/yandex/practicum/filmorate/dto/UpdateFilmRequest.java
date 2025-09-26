@@ -8,6 +8,7 @@ import lombok.Data;
 import ru.yandex.practicum.filmorate.model.ReleaseDate;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 // Класс, содержащий данные для обновления фильма
 @Data
@@ -23,6 +24,9 @@ public class UpdateFilmRequest {
     private LocalDate releaseDate;
     @Positive(message = "Продолжительность фильма должна быть положительным числом")
     private Integer duration;
+    private Set<DirectorIdDto> directors;
+    private MpaIdDto mpa;
+    private Set<GenreIdDto> genres;
 
     public boolean hasName() {
         return name != null;
@@ -38,5 +42,17 @@ public class UpdateFilmRequest {
 
     public boolean hasDuration() {
         return duration != null;
+    }
+
+    public boolean hasDirectors() {
+        return directors != null;
+    }
+
+    public boolean hasMpa() {
+        return mpa != null;
+    }
+
+    public boolean hasGenres() {
+        return genres != null;
     }
 }

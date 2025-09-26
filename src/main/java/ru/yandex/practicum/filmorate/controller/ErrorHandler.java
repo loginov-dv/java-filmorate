@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
@@ -17,14 +18,12 @@ import java.util.stream.Collectors;
 // RestControllerAdvice для обработки исключений и преобразования их в HTTP-ответы
 @RestControllerAdvice
 public class ErrorHandler {
-    // Обработчик ValidationException
     @ExceptionHandler(ValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorMessage handleValidationException(final ValidationException ex) {
         return new ErrorMessage(ex.getMessage());
     }
 
-    // Обработчик NotFoundException
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorMessage handleNotFoundException(final NotFoundException ex) {
@@ -38,6 +37,19 @@ public class ErrorHandler {
         // Собираем все ошибки
         List<String> errors = ex.getBindingResult().getFieldErrors().stream()
                 .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .collect(Collectors.toList());
+
+        return new ErrorMessage(String.join(". ", errors));
+    }
+
+    // Возникает при ошибках валидации id в контроллерах
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND) // требования в тестах
+    public ErrorMessage handleConstraintViolationException(final ConstraintViolationException ex) {
+        // Собираем все ошибки
+        List<String> errors = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath().toString()
+                        + " " + violation.getMessage())
                 .collect(Collectors.toList());
 
         return new ErrorMessage(String.join(". ", errors));

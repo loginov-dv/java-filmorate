@@ -355,7 +355,7 @@ class UserControllerTest {
         mockMvc.perform(put("/users/1/friends/4"))
                 .andExpect(status().isOk());
         mockMvc.perform(delete("/users/1/friends/4"))
-                .andExpect(status().isOk());
+                .andExpect(status().isNoContent());
     }
 
     // Проверяет возвращение списка друзей

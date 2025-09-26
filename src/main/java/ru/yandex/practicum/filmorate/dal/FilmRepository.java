@@ -7,34 +7,36 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dal.mappers.FilmResultSetExtractor;
+import ru.yandex.practicum.filmorate.model.Director;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
-// Класс-репозиторий для работы с таблицей "films"
 @Repository
 public class FilmRepository extends BaseRepository<Film> {
-    // Наименование таблицы
-    private static final String TABLE_NAME = "films";
     // Запросы
     private static final String FIND_ALL_QUERY = """
             SELECT
-                f.film_id AS film_id,
-                f.name AS film_name,
-                f.description AS film_description,
-                f.release_date AS film_release_date,
-                f.duration AS film_duration,
-                r.rating_id AS rating_id,
-                r.name AS rating_name,
-                g.genre_id AS genre_id,
-                g.name AS genre_name
-            FROM films AS f
-            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
-            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
-            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
-            ORDER BY f.film_id""";
+                    f.film_id AS film_id,
+                    f.name AS film_name,
+                    f.description AS film_description,
+                    f.release_date AS film_release_date,
+                    f.duration AS film_duration,
+                    r.rating_id AS rating_id,
+                    r.name AS rating_name,
+                    g.genre_id AS genre_id,
+                    g.name AS genre_name,
+                    d.director_id AS director_id,
+                    d.name AS director_name
+                FROM films AS f
+                LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+                LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+                LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+                LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
+                LEFT JOIN directors AS d ON fd.director_id = d.director_id
+                ORDER BY f.film_id""";
     private static final String FIND_BY_ID_QUERY = """
             SELECT
                 f.film_id AS film_id,
@@ -45,24 +47,66 @@ public class FilmRepository extends BaseRepository<Film> {
                 r.rating_id AS rating_id,
                 r.name AS rating_name,
                 g.genre_id AS genre_id,
-                g.name AS genre_name
+                g.name AS genre_name,
+                d.director_id AS director_id,
+                d.name AS director_name
             FROM films AS f
             LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
+            LEFT JOIN directors AS d ON fd.director_id = d.director_id
             WHERE f.film_id = ?""";
-    private static final String INSERT_FILM_QUERY = "INSERT INTO " + TABLE_NAME +
+    private static final String INSERT_FILM_QUERY = "INSERT INTO films" +
             "(name, description, release_date, duration, rating_id) " +
             "VALUES(?, ?, ?, ?, ?)";
-    private static final String INSERT_FILM_GENRE_QUERY = "INSERT INTO film_genres(film_id, genre_id) " +
-            "VALUES(?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
-            "SET name = ?, description = ?, release_date = ?, duration = ? WHERE film_id = ?";
+    private static final String UPDATE_QUERY = "UPDATE films " +
+            "SET name = ?, description = ?, release_date = ?, duration = ?, rating_id = ? WHERE film_id = ?";
     private static final String INSERT_FILM_LIKES_QUERY = "INSERT INTO film_likes(film_id, user_id) " +
             "VALUES(?, ?)";
     private static final String DELETE_FROM_FILM_LIKES_QUERY = "DELETE FROM film_likes " +
             "WHERE film_id = ? AND user_id = ?";
-    private static final String GET_POPULAR_QUERY = """
+    private static final String GET_POPULAR_WITH_FILTERS_QUERY = """
+            WITH popular AS (
+              SELECT
+                f.film_id,
+                COUNT(fl.user_id) AS likes
+              FROM films f
+              LEFT JOIN film_likes fl ON f.film_id = fl.film_id
+              LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+              WHERE ( ? IS NULL OR fg.genre_id = ? )
+                AND ( ? IS NULL OR EXTRACT(YEAR FROM f.release_date) = ? )
+              GROUP BY f.film_id
+              ORDER BY likes DESC
+              LIMIT ?
+            )
+            SELECT
+              f.film_id AS film_id,
+              f.name AS film_name,
+              f.description AS film_description,
+              f.release_date AS film_release_date,
+              f.duration AS film_duration,
+              r.rating_id AS rating_id,
+              r.name AS rating_name,
+              g.genre_id AS genre_id,
+              g.name AS genre_name,
+              d.director_id AS director_id,
+              d.name AS director_name,
+              p.likes AS likes_count
+            FROM films f
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors AS fd ON f.film_id = fd.film_id
+            LEFT JOIN directors AS d ON fd.director_id = d.director_id
+            JOIN popular p ON f.film_id = p.film_id
+            ORDER BY p.likes DESC
+            """;
+    private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+    private static final String DELETE_FILM_QUERY = "DELETE FROM films WHERE film_id = ?";
+    private static final String GET_FILM_DIRECTORS_QUERY = "SELECT director_id FROM film_directors " +
+            "WHERE film_id = ?";
+    private static final String GET_DIRECTORS_FILMS_ORDERED_BY_YEAR = """
             SELECT
                 f.film_id AS film_id,
                 f.name AS film_name,
@@ -72,17 +116,109 @@ public class FilmRepository extends BaseRepository<Film> {
                 r.rating_id AS rating_id,
                 r.name AS rating_name,
                 g.genre_id AS genre_id,
-                g.name AS genre_name
-            FROM films AS f
-            JOIN film_likes AS fl ON f.film_id = fl.film_id
+                g.name AS genre_name,
+                d.director_id AS director_id,
+                d.name AS director_name
+            FROM directors AS d
+            JOIN film_directors AS fd ON d.director_id = fd.director_id
+            JOIN films AS f ON fd.film_id = f.film_id
             LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
             LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
             LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
-            GROUP BY film_id, genre_id
-            ORDER BY COUNT(fl.user_id) DESC
-            LIMIT ?
+            WHERE d.director_id = ?
+            GROUP BY film_id, genre_id, director_id
+            ORDER BY EXTRACT(YEAR FROM CAST(f.release_date AS date))
             """;
-    private static final String GET_FILM_LIKES_QUERY = "SELECT user_id FROM film_likes WHERE film_id = ?";
+    private static final String GET_DIRECTORS_FILMS_ORDERED_BY_LIKES = """
+            SELECT
+                f.film_id AS film_id,
+                f.name AS film_name,
+                f.description AS film_description,
+                f.release_date AS film_release_date,
+                f.duration AS film_duration,
+                r.rating_id AS rating_id,
+                r.name AS rating_name,
+                g.genre_id AS genre_id,
+                g.name AS genre_name,
+                d.director_id AS director_id,
+                d.name AS director_name
+            FROM directors AS d
+            JOIN film_directors AS fd ON d.director_id = fd.director_id
+            JOIN films AS f ON fd.film_id = f.film_id
+            LEFT JOIN film_likes AS fl ON f.film_id = fl.film_id
+            LEFT JOIN ratings AS r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg ON f.film_id = fg.film_id
+            LEFT JOIN genres AS g ON fg.genre_id = g.genre_id
+            WHERE d.director_id = ?
+            GROUP BY film_id, genre_id, director_id
+            ORDER BY COUNT(fl.user_id) DESC
+            """;
+    private static final String SEARCH_BY_TITLE_OR_DIRECTOR_QUERY = """
+            WITH likes AS (
+                SELECT film_id, COUNT(*) AS cnt
+                FROM film_likes
+                GROUP BY film_id
+            )
+            SELECT
+                f.film_id           AS film_id,
+                f.name              AS film_name,
+                f.description       AS film_description,
+                f.release_date      AS film_release_date,
+                f.duration          AS film_duration,
+                r.rating_id         AS rating_id,
+                r.name              AS rating_name,
+                g.genre_id          AS genre_id,
+                g.name              AS genre_name,
+                d.director_id       AS director_id,
+                d.name              AS director_name,
+                COALESCE(l.cnt, 0)  AS likes_cnt
+            FROM films AS f
+            LEFT JOIN ratings AS r         ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres AS fg    ON f.film_id  = fg.film_id
+            LEFT JOIN genres AS g          ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors AS fd ON f.film_id  = fd.film_id
+            LEFT JOIN directors AS d       ON fd.director_id = d.director_id
+            LEFT JOIN likes AS l           ON l.film_id  = f.film_id
+            WHERE ( :titleCond ) OR ( :directorCond )
+            ORDER BY COALESCE(l.cnt, 0) DESC, f.film_id
+            """;
+    private static final String GET_RECOMMENDED_FILMS_QUERY = """
+            WITH user_likes AS (
+                SELECT film_id
+                FROM film_likes
+                WHERE user_id = ?
+            )
+            SELECT f.film_id,
+                   f.name AS film_name,
+                   f.description AS film_description,
+                   f.release_date AS film_release_date,
+                   f.duration AS film_duration,
+                   r.rating_id,
+                   r.name AS rating_name,
+                   g.genre_id,
+                   g.name AS genre_name,
+                   d.director_id,
+                   d.name AS director_name
+            FROM film_likes fl
+            JOIN films f ON fl.film_id = f.film_id
+            LEFT JOIN ratings r ON f.rating_id = r.rating_id
+            LEFT JOIN film_genres fg ON f.film_id = fg.film_id
+            LEFT JOIN genres g ON fg.genre_id = g.genre_id
+            LEFT JOIN film_directors fd ON f.film_id = fd.film_id
+            LEFT JOIN directors d ON fd.director_id = d.director_id
+            WHERE fl.user_id IN (
+                SELECT l2.user_id
+                FROM film_likes l1
+                JOIN film_likes l2 ON l1.film_id = l2.film_id
+                WHERE l1.user_id = ? AND l2.user_id <> ?
+            )
+            AND f.film_id NOT IN (SELECT film_id FROM user_likes)
+            GROUP BY f.film_id, r.rating_id, r.name, g.genre_id, g.name, d.director_id, d.name
+            ORDER BY f.film_id;
+            """;
+    private static final String GET_FILMS_ID_BY_USER_ID_QUERY = "SELECT film_id FROM film_likes WHERE user_id = ?";
+    private static final String GET_FILM_GENRES_QUERY = "SELECT genre_id FROM film_genres " +
+            "WHERE film_id = ?";
     // Логгер
     private static final Logger logger = LoggerFactory.getLogger(FilmRepository.class);
     // ResultSetExtractor
@@ -117,10 +253,24 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Получен новый id = {}", id);
         film.setId(id);
 
-        for (Genre genre : film.getGenres()) {
-            insert(INSERT_FILM_GENRE_QUERY, film.getId(), genre.getId());
-            logger.debug("Добавлена строка в таблицу film_genres: film_id = {}, genre_id = {}",
-                    film.getId(), genre.getId());
+        if (!film.getGenres().isEmpty()) {
+            List<String> genreValues = film.getGenres().stream()
+                    .map(genre -> "(" + film.getId() + ", " + genre.getId() + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_genres(film_id, genre_id) VALUES "
+                    + String.join(", ", genreValues));
+            logger.debug("Добавлены строки в таблицу film_genres: film_id = {}, genre_id = {}",
+                    film.getId(), film.getGenres().stream().map(Genre::getId).toList());
+        }
+
+        if (!film.getDirectors().isEmpty()) {
+            List<String> directorValues = film.getDirectors().stream()
+                    .map(director -> "(" + film.getId() + ", " + director.getId() + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_directors(film_id, director_id) VALUES "
+                    + String.join(", ", directorValues));
+            logger.debug("Добавлены строки в таблицу film_genres: film_id = {}, genre_id = {}",
+                    film.getId(), film.getDirectors().stream().map(Director::getId).toList());
         }
 
         logger.debug("Добавлена строка в таблицу films с id = {}", id);
@@ -134,15 +284,76 @@ public class FilmRepository extends BaseRepository<Film> {
                 film.getDescription(),
                 film.getReleaseDate(),
                 film.getDuration(),
+                film.getRating().getId(),
                 film.getId());
-
         logger.debug("Обновлена строка в таблице films с id = {}", film.getId());
+
+        Map<String, List<Integer>> directorsDiff = findDiff(super.findManyInts(GET_FILM_DIRECTORS_QUERY, film.getId()),
+                film.getDirectors().stream().map(Director::getId).collect(Collectors.toList()));
+
+        if (!directorsDiff.get("removed").isEmpty()) {
+            List<Integer> removed = directorsDiff.get("removed");
+            logger.debug("to remove: {}", removed);
+            String query = "DELETE FROM film_directors WHERE film_id = ? " +
+                    "AND director_id IN (" + createPlaceholders(removed.size()) + ")";
+            logger.debug("query: {}", query);
+            List<Integer> params = new ArrayList<>();
+            params.add(film.getId());
+            params.addAll(removed);
+            logger.debug("params: {}", params);
+            update(query, params.toArray());
+            logger.debug("Удалены строки из таблицы film_directors, где film_id = {} и directors_id = {}",
+                    film.getId(), removed);
+        }
+
+        if (!directorsDiff.get("added").isEmpty()) {
+            List<Integer> added = directorsDiff.get("added");
+            List<String> directorValues = added.stream()
+                    .map(directorId -> "(" + film.getId() + ", " + directorId + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_directors(film_id, director_id) VALUES "
+                    + String.join(", ", directorValues));
+
+            logger.debug("Добавлены строки в таблицу film_directors, где film_id = {} и directors_id = {}",
+                    film.getId(), added);
+        }
+
+        Map<String, List<Integer>> genresDiff = findDiff(super.findManyInts(GET_FILM_GENRES_QUERY, film.getId()),
+                film.getGenres().stream().map(Genre::getId).collect(Collectors.toList()));
+
+        if (!genresDiff.get("removed").isEmpty()) {
+            List<Integer> removed = genresDiff.get("removed");
+            logger.debug("to remove: {}", removed);
+            String query = "DELETE FROM film_genres WHERE film_id = ? " +
+                    "AND genre_id IN (" + createPlaceholders(removed.size()) + ")";
+            logger.debug("query: {}", query);
+            List<Integer> params = new ArrayList<>();
+            params.add(film.getId());
+            params.addAll(removed);
+            logger.debug("params: {}", params);
+            update(query, params.toArray());
+            logger.debug("Удалены строки из таблицы film_genres, где film_id = {} и genre_id = {}",
+                    film.getId(), removed);
+        }
+
+        if (!genresDiff.get("added").isEmpty()) {
+            List<Integer> added = genresDiff.get("added");
+            List<String> addedValues = added.stream()
+                    .map(directorId -> "(" + film.getId() + ", " + directorId + ")")
+                    .toList();
+            insertWithoutKey("INSERT INTO film_genres(film_id, genre_id) VALUES "
+                    + String.join(", ", addedValues));
+
+            logger.debug("Добавлены строки в таблицу film_genres, где film_id = {} и genre_id = {}",
+                    film.getId(), added);
+        }
+
         return film;
     }
 
     public void putLike(int filmId, int userId) {
         logger.debug("Запрос на вставку строки в таблицу film_likes");
-        insert(INSERT_FILM_LIKES_QUERY, filmId, userId);
+        insertWithoutKey(INSERT_FILM_LIKES_QUERY, filmId, userId);
         logger.debug("Добавлена строка в таблицу film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
@@ -152,13 +363,94 @@ public class FilmRepository extends BaseRepository<Film> {
         logger.debug("Удалена строка из таблицы film_likes: film_id = {}, user_id = {}", filmId, userId);
     }
 
+    public List<Film> getPopular(int count, Integer genreId, Integer year) {
+        logger.debug("Запрос на получение первых {} популярных фильмов с фильтрами", count);
+        return findMany(GET_POPULAR_WITH_FILTERS_QUERY, filmResultSetExtractor,
+                genreId, genreId, year, year, count);
+    }
+
     public List<Film> getPopular(int count) {
         logger.debug("Запрос на получение первых {} популярных фильмов", count);
-        return findMany(GET_POPULAR_QUERY, filmResultSetExtractor, count);
+        return findMany(GET_POPULAR_WITH_FILTERS_QUERY, filmResultSetExtractor,
+                null, null, null, null, count);
     }
 
     public List<Integer> getLikesUserId(int filmId) {
         logger.debug("Запрос на получение всех user_id из таблицы film_likes для film_id = {}", filmId);
         return super.findManyInts(GET_FILM_LIKES_QUERY, filmId);
+    }
+
+    public void removeFilmById(int filmId) {
+        logger.debug("Запрос на удаление фильма из таблицы films для film_id = {}", filmId);
+        update(DELETE_FILM_QUERY, filmId);
+        logger.debug("Удалена строка из таблицы films: film_id = {}", filmId);
+    }
+
+    public List<Film> searchDirectorsFilmsSortedByYear(int directorId) {
+        logger.debug("Запрос на получение всех фильмов режиссёра с id = {}, отсортированных по годам", directorId);
+        return findMany(GET_DIRECTORS_FILMS_ORDERED_BY_YEAR, filmResultSetExtractor, directorId);
+    }
+
+    public List<Film> searchDirectorsFilmsSortedByLikes(int directorId) {
+        logger.debug("Запрос на получение всех фильмов режиссёра с id = {}, отсортированных по лайкам", directorId);
+        return findMany(GET_DIRECTORS_FILMS_ORDERED_BY_LIKES, filmResultSetExtractor, directorId);
+    }
+
+    // Сортировка по популярности, фильмы с 0 лайков не теряются.
+    public List<Film> searchByTitleAndOrDirector(String like, boolean byTitle, boolean byDirector) {
+        logger.debug("Поиск фильмов: like='{}', byTitle={}, byDirector={}", like, byTitle, byDirector);
+
+        String titleCond = byTitle ? "LOWER(f.name) LIKE ?" : "1=0";
+        String directorCond = byDirector
+                ? "EXISTS (SELECT 1 FROM film_directors fdx " +
+                "JOIN directors dx ON dx.director_id = fdx.director_id " +
+                "WHERE fdx.film_id = f.film_id AND LOWER(dx.name) LIKE ?)"
+                : "1=0";
+
+        String sql = SEARCH_BY_TITLE_OR_DIRECTOR_QUERY
+                .replace(":titleCond", titleCond)
+                .replace(":directorCond", directorCond);
+
+        Object[] params;
+        if (byTitle && byDirector) {
+            params = new Object[]{like, like};
+        } else if (byTitle) {
+            params = new Object[]{like};
+        } else {
+            params = new Object[]{like};
+        }
+
+        return findMany(sql, filmResultSetExtractor, params);
+    }
+
+    public List<Integer> getFilmLikesByUserId(int userId) {
+        logger.debug("Запрос на получение всех film_id из таблицы film_likes для user_id = {}", userId);
+        return super.findManyInts(GET_FILMS_ID_BY_USER_ID_QUERY, userId);
+    }
+
+    public List<Film> getRecommendations(int userId) {
+        logger.debug("Запросов на получение рекоммендованных фильмов для пользователя с user_id = {}", userId);
+        return findMany(GET_RECOMMENDED_FILMS_QUERY, filmResultSetExtractor, userId, userId, userId);
+    }
+
+    private String createPlaceholders(int count) {
+        return String.join(",", Collections.nCopies(count, "?"));
+    }
+
+    private static <T> Map<String, List<T>> findDiff(List<T> list1, List<T> list2) {
+        Map<String, List<T>> diff = new HashMap<>();
+
+        // Добавлено
+        List<T> added = new ArrayList<>(list2);
+        added.removeAll(list1);
+
+        // Удалено
+        List<T> removed = new ArrayList<>(list1);
+        removed.removeAll(list2);
+
+        diff.put("added", added);
+        diff.put("removed", removed);
+
+        return diff;
     }
 }

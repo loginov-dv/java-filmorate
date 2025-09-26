@@ -14,14 +14,11 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 
-// Базовый класс репозитория для работы с таблицами
+// Базовый класс репозитория
 @RequiredArgsConstructor
 public class BaseRepository<T> {
-    // JdbcTemplate
     private final JdbcTemplate jdbcTemplate;
-    // Маппер
     private final RowMapper<T> rowMapper;
-    // Логгер
     private static final Logger logger = LoggerFactory.getLogger(BaseRepository.class);
 
     protected Optional<T> findOne(String query, Object... params) {
@@ -61,6 +58,14 @@ public class BaseRepository<T> {
             return id;
         } else {
             throw new RuntimeException("Не удалось сохранить данные");
+        }
+    }
+
+    protected void insertWithoutKey(String query, Object... params) {
+        int rowsInserted = jdbcTemplate.update(query, params);
+        if (rowsInserted == 0) {
+            logger.warn("Не было вставлено ни одной строки для запроса: {}", query);
+            throw new RuntimeException("Не удалось вставить данные");
         }
     }
 

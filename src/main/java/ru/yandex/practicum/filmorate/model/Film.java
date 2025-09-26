@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.Set;
 
 // Модель данных для описания фильма
@@ -32,5 +33,7 @@ public class Film {
     // MPA-рейтинг
     private MpaRating rating;
     // Жанры
-    private Set<Genre> genres;
+    private Set<Genre> genres = new HashSet<>();
+    // Режиссёры
+    private Set<Director> directors = new HashSet<>();
 }

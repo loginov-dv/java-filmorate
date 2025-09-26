@@ -11,29 +11,54 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.util.List;
 import java.util.Optional;
 
-// Класс-репозиторий для работы с таблицей "users"
 @Repository
 public class UserRepository extends BaseRepository<User> {
-    // Наименование таблицы
-    private static final String TABLE_NAME = "users";
+    private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
     // Запросы
-    private static final String FIND_ALL_QUERY = "SELECT * FROM " + TABLE_NAME;
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE user_id = ?";
-    private static final String FIND_BY_EMAIL_QUERY = "SELECT * FROM " + TABLE_NAME + " WHERE email = ?";
-    private static final String INSERT_QUERY = "INSERT INTO " + TABLE_NAME +
-            "(email, login, name, birthday)" +
-            "VALUES (?, ?, ?, ?)";
-    private static final String UPDATE_QUERY = "UPDATE " + TABLE_NAME + " " +
+    private static final String FIND_ALL_QUERY = """
+            SELECT user_id,
+                email,
+                login,
+                name,
+                birthday,
+            FROM users
+            """;
+    private static final String FIND_BY_ID_QUERY = """
+            SELECT user_id,
+                email,
+                login,
+                name,
+                birthday,
+            FROM users
+            WHERE user_id = ?
+            """;
+    private static final String FIND_BY_EMAIL_QUERY = """
+            SELECT user_id,
+                email,
+                login,
+                name,
+                birthday,
+            FROM users
+            WHERE email = ?
+            """;
+    private static final String INSERT_QUERY = "INSERT INTO users" +
+            "(email, login, name, birthday) VALUES (?, ?, ?, ?)";
+    private static final String UPDATE_QUERY = "UPDATE users " +
             "SET email = ?, login = ?, name = ?, birthday = ? WHERE user_id = ?";
-    private static final String FIND_FRIENDS_QUERY = "SELECT u.user_id, u.email, u.login, u.name, u.birthday " +
-            "FROM friendships AS f JOIN " + TABLE_NAME + " AS u ON f.friend_id = u.user_id " +
-            "WHERE f.user_id = ?";
+    private static final String FIND_FRIENDS_QUERY = """
+            SELECT u.user_id,
+                u.email,
+                u.login,
+                u.name,
+                u.birthday
+            FROM friendships AS f JOIN users AS u ON f.friend_id = u.user_id
+            WHERE f.user_id = ?
+            """;
     private static final String INSERT_INTO_FRIENDSHIPS_QUERY = "INSERT INTO friendships(user_id, friend_id, status) " +
             "VALUES(?, ?, true)";
     private static final String DELETE_FROM_FRIENDSHIPS_QUERY = "DELETE FROM friendships " +
             "WHERE user_id = ? AND friend_id = ?";
-    // Логгер
-    private static final Logger logger = LoggerFactory.getLogger(UserRepository.class);
+    private static final String DELETE_USER_QUERY = "DELETE FROM users WHERE user_id = ?";
 
     @Autowired
     public UserRepository(JdbcTemplate jdbcTemplate, RowMapper<User> rowMapper) {
@@ -71,7 +96,7 @@ public class UserRepository extends BaseRepository<User> {
     }
 
     public User update(User user) {
-        logger.debug("Запрос на обновление строки в таблице films с id = {}", user.getId());
+        logger.debug("Запрос на обновление строки в таблице users с id = {}", user.getId());
         update(UPDATE_QUERY,
                 user.getEmail(),
                 user.getLogin(),
@@ -99,5 +124,10 @@ public class UserRepository extends BaseRepository<User> {
     public List<User> getFriends(int userId) {
         logger.debug("Запрос на получение всех друзей пользователя с id = {}", userId);
         return findMany(FIND_FRIENDS_QUERY, userId);
+    }
+
+    public void removeUserById(int userId) {
+        logger.debug("Запрос на удаление пользователя с user_id = {}", userId);
+        update(DELETE_USER_QUERY, userId);
     }
 }
